@@ -11,7 +11,7 @@
 
 % ACL titles should be in Title Case, not ALL CAPS
 % center title
-\title{SemEval-2026 Task 6: CLARITY - Unmasking Political Question Evasions}
+\title{HU at SemEval-2026 Task 6: CLARITY - Unmasking Political Question Evasions}
 % Authors grouped for proper ACL formatting
 \author{
   \textbf{Taha Munawar$^\dag$, Basil Ali Khan$^\dag$, Arsal Jangda$^\dag$,} \\
@@ -70,7 +70,7 @@ Subtask1 and Subtask 2 of SemEval-2026 Task 6 focus on predicting the Clarity an
 
 The automatic detection of political question evasion draws on research in ambiguity detection and political text analysis. This section reviews key studies that inform our approach.
 
-\citet{b1} tackle the challenge of identifying ambiguous questions in large language model (LLM) question-answering systems. They show that LLMs can generate coherent responses but often fail to recognize questions with multiple interpretations, a common strategy in political discourse. Their method combines LLM-generated multiple answers (via self-consistency prompting) with a lightweight Random Forest classifier that measures answer variance to predict ambiguity. This approach outperforms prompt-based and larger transformer baselines, especially with limited labeled data. For our work, their technique is relevant because political evasion often appears as subtle ambiguity in answers, and their low-resource success mirrors real-world constraints in political datasets.
+\citet{b1} address ambiguous question identification in LLM QA, noting that LLMs often generate coherent but multi-interpretable responses—a common political tactic. Their method uses self-consistency prompting to produce multiple answers, then a lightweight Random Forest measures answer variance to predict ambiguity. This approach outperforms prompt/larger transformer baselines, especially with limited labeled data. This technique is relevant because political evasion often involves subtle answer ambiguity, and their success with low-resource data is applicable to real-world political constraints.
 
 \citet{b2} examine how well language models handle ambiguity through the AMBIENT benchmark, a linguist-annotated dataset of lexical, syntactic, and pragmatic ambiguities, including political claims. They find that even advanced models like GPT-4 struggle to disambiguate meanings as effectively as humans. However, fine-tuned multilabel NLI models can flag ambiguous or misleading claims “in the wild.” This insight is crucial for our project: political evasion frequently relies on ambiguity, and the limits of current models highlight the need for domain-specific detection methods.
 
@@ -84,11 +84,11 @@ For example, \citet{b5} define ``shifting'' as a subtle evasion where the interv
 
 Other studies provide granular, linguistic-level examples that somewhat map to our labels. \citet{b7} ``non-type-conforming answers'' (e.g., giving a general description instead of a specific number)  aligns  with the ``General'' label. Similarly, Abidin et al. identify ``minimizing the divergence'' (e.g., calling an incident an ``isolated case''), which fits the ``Partial'' or ``General'' labels. These works also categorize confrontational tactics like ``attacking the questioner'' or ``challenging professionalism'', which are forms of ``Dodging'' or ``Deflection''.
 
-While these papers do not propose computational models, nor do they provide annotated datasets which we can utilize for model training, they offer a theoretical underpinning for the taxonomy used in this SemEval-2026 task. Perhaps we can leverage some of their linguistic insights to engineer features or augment our training data. More importantly, they validate the taxonomy's relevance and comprehensiveness for capturing the multifaceted nature of political evasion.
+Although these papers do not offer models or annotated data, they ground the SemEval-2026 taxonomy in established linguistic theory. Their insights could inform feature engineering or data augmentation, and they help validate the taxonomy’s relevance for capturing political evasion.
 
-A key computational limitation, noted by the task organizers in \citet{b8}, is that traditional classifiers like BERT are limited to 512 tokens, forcing the truncation of long sQA pairs. This truncation risks cutting off the very part of the answer that contains the evasion. The recent introduction of ModernBERT  directly addresses this. This modernized encoder features a native 8192 sequence length. This expanded context window is highly relevant to our work, as it allows our model to process the entire sQA to capture the full context of a long, complex answer.
+The primary computational constraint for sQA pairs is that traditional classifiers like BERT are limited to 512 tokens, necessitating the truncation of long answers and potentially omitting the part containing the evasion \citet{b8}. We address this limitation using ModernBERT, which features a native 8192 sequence length. This expanded context window allows our model to process the entire sQA pair, capturing the full context of long, complex answers.
 
-Lastly, \citet{b9} offer a valuable domain pre-adaptation strategy using their large dataset of 58,343 Canadian Question Period exchanges. They trained a Sentence-BERT model to measure answer ``quality'' via cosine similarity between question-answer embeddings, learned self-supervisedly by identifying correct answers from negative samples . This is highly relevant because we can pre-train our classifier (like ModernBERT) on their political Q\&A dataset using this same cosine similarity objective. This allows the model to learn the specific discourse patterns of political Q\&As before fine-tuning on the SemEval-2026 evasion task, potentially improving performance.
+Lastly, \citet{b9} introduce a useful domain pre-adaptation strategy using their 58,343 Canadian Question Period exchanges. They train a Sentence-BERT model with a self-supervised cosine-similarity objective to learn Q\&A  quality. We can similarly pre-train our classifier on their political Q\&A data to capture domain-specific discourse patterns before fine-tuning on the SemEval-2026 evasion task, potentially improving performance.
 
 \section{Dataset}
 
@@ -185,7 +185,7 @@ The resulting NLI predictions were mapped directly to the three clarity labels:
     \item \textbf{Neutral} $\rightarrow$ Ambivalent Reply
 \end{itemize}
 
-This NLI framing proved highly effective and logically congruent with Subtask 1, as the three native NLI output classes (Entailment, Contradiction, Neutral) directly mapped to the three required clarity labels. However, this approach was not extended to Subtask 2. Since Subtask 2 requires predicting one of nine distinct evasion technique labels, we determined that there was no clear or principled way to construct a single Hypothesis-Premise relationship that could logically correspond to this larger, multi-class set of evasion categories.
+This NLI framing worked well for Subtask 1 because its three output classes aligned directly with the three clarity labels. We did not extend it to Subtask 2, which involves nine evasion categories, because there is no coherent way to design a single premise–hypothesis formulation that meaningfully maps onto such a large, diverse label set.
 
 \subsection{Generative Approach}
 We explored the capabilities of generative LLMs by fine-tuning the \texttt{Llama-3.2-3B} instruct model. Due to computational constraints, we used 4-bit quantization (QLoRA). The inputs consisted of each question--answer pair provided directly to the model, and it was prompted to generate the classification label. For training stability and efficiency, we applied LoRA (Low-Rank Adaptation) with an \textbf{r} value of \textbf{16} and an \textbf{alpha} of \textbf{32}. 
@@ -226,7 +226,7 @@ Ours & (Gen) Llama-3.2-3B & 0.57 & - \\
 \label{tab:results}
 \end{table}
 
-\vspace{-2em}
+% \vspace{-2em}
 
 \subsection{Comparison with State-of-the-Art}
 A critical finding of our work is the efficiency-performance trade-off compared to the researchers' baseline. The baseline employed a massive Llama-2-70B model requiring a 4$\times$A100 GPU cluster (160GB VRAM) to achieve an F1 of 0.68 on Subtask 1.
