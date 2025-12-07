@@ -1,0 +1,228 @@
+\documentclass[12pt]{article}
+\usepackage[hyperref]{acl} % Added 'review' for anonymity
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{microtype} % Recommended for ACL
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+% ACL titles should be in Title Case, not ALL CAPS
+% center title
+\title{SemEval-2026 Task 6: CLARITY - Unmasking Political Question Evasions}
+% Authors grouped for proper ACL formatting
+\author{
+  \textbf{Taha Munawar$^\dag$, Basil Ali Khan$^\dag$, Arsal Jangda$^\dag$,} \\
+  \textbf{Sarfaraz Baig$^\dag$, Sandesh Kumar$^\dag$, \textnormal{and} Abdul Samad$^\dag$} \\
+  $^\dag$Habib University, Dhanani School of Science \& Engineering, Pakistan \\
+  \texttt{\{tm08122, bk08221, aj08514, sb08112\}@st.habib.edu.pk} \\
+  \texttt{\{sandesh.kumar, abdul.samad\}@sse.habib.edu.pk}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This paper details our submission for SemEval-2026 Task 6: CLARITY - Unmasking Political Question Evasions. The task focuses on categorizing question-answer pairs from political interviews using a two-level hierarchical taxonomy. The objective is to classify each response by both its high-level ``clarity'' and its specific fine-grained ``evasion technique''. This work aims to advance the automated detection of political equivocation. We present novel methodologies designed to build upon the baseline models from \citet{b4} and improve classification performance on this task.
+\end{abstract}
+
+\section{Introduction}
+In high-stakes public discourse, particularly in political interviews, the clarity of a response is often as important as its content. The phenomenon of ``equivocation'' or ``evasion'' (the act of responding to a question without directly answering it) is a well-documented strategy used to navigate difficult topics, deflect scrutiny, or manage public perception. While this has been extensively studied in political science and linguistics, the automated detection and classification of such ambiguous responses present a complex challenge for Natural Language Processing (NLP).
+
+This challenge was formally framed as a discrete NLP task by \citet{b4} in their paper: ``I Never Said That'': A dataset, taxonomy and baselines on response clarity classification. The central research question defined by \citet{b4} is: \textbf{How can we automatically and systematically evaluate the clarity of a given response with respect to its corresponding question?}
+
+To address this, a novel two-level hierarchical taxonomy was developed to capture the nuances of response clarity, as shown in Fig \ref{fig:taxonomy}. The first level, Clarity, provides a high-level evaluation of the response's overall directness and completeness in relation to the question. The second level, Evasion, identifies the specific fine-grained linguistic technique or strategy used by the speaker.
+
+Subtask1 and Subtask 2 of SemEval-2026 Task 6 focus on predicting the Clarity and Evasion levels, respectively, for given question-answer pairs from political interviews. The explanation of the taxonomy label for each level is as follows:
+
+\textbf{Clarity Level Categories:}
+
+\begin{itemize}
+    \item \textbf{Clear Reply:} Information is explicitly provided.
+    \item \textbf{Clear Non-Reply:} Information is openly refused.
+    \item \textbf{Ambivalent Reply:} The response is related but evasive.
+\end{itemize}
+
+\textbf{Evasion Level Categories:}
+
+\begin{itemize}
+    \item \textbf{Explicit:} The information requested is explicitly stated (in the requested form).
+    \item \textbf{Implicit:} The information requested is given, but without being explicitly stated (not in the expected form).
+    \item \textbf{General:} The information provided is too general or lacks the requested specificity.
+    \item \textbf{Partial:} Offers only a specific component of the requested information.
+    \item \textbf{Dodging:} Ignores the question altogether.
+    \item \textbf{Deflection:} Starts on topic but shifts the focus and makes a different point than what is asked.
+    \item \textbf{Declining to answer:} Acknowledges the question but directly or indirectly refuses to answer at the moment.
+    \item \textbf{Claims ignorance:} The answerer claims or admits not to know the answer themselves.
+    \item \textbf{Clarification:} Does not provide the requested information and instead asks for clarification.
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{taxonomy.png}
+    \caption{Two-level hierarchical taxonomy for evaluating response clarity.}
+    \label{fig:taxonomy}
+\end{figure}
+
+\section{Literature Review}
+
+The automatic detection of political question evasion draws on research in ambiguity detection and political text analysis. This section reviews key studies that inform our approach.
+
+\citet{b1} tackle the challenge of identifying ambiguous questions in large language model (LLM) question-answering systems. They show that LLMs can generate coherent responses but often fail to recognize questions with multiple interpretations, a common strategy in political discourse. Their method combines LLM-generated multiple answers (via self-consistency prompting) with a lightweight Random Forest classifier that measures answer variance to predict ambiguity. This approach outperforms prompt-based and larger transformer baselines, especially with limited labeled data. For our work, their technique is relevant because political evasion often appears as subtle ambiguity in answers, and their low-resource success mirrors real-world constraints in political datasets.
+
+\citet{b2} examine how well language models handle ambiguity through the AMBIENT benchmark, a linguist-annotated dataset of lexical, syntactic, and pragmatic ambiguities, including political claims. They find that even advanced models like GPT-4 struggle to disambiguate meanings as effectively as humans. However, fine-tuned multilabel NLI models can flag ambiguous or misleading claims “in the wild.” This insight is crucial for our project: political evasion frequently relies on ambiguity, and the limits of current models highlight the need for domain-specific detection methods.
+
+\citet{b3} survey the use of deep learning in political text analysis, tracing the shift from feature-engineered models to contextual transformers such as BERT. They show that deep models capture nuance and context, essential for interpreting political communication, where subtext and intent are key. Their discussion of transfer learning, annotation efficiency, and ethical issues underscores the importance of scalable and transparent systems for tasks like evasion detection.
+
+While the previously mentioned studies focus on computational ambiguity detection, a separate body of work in linguistics and political science provides the theoretical foundation for evasion taxonomies, like the one used in this SemEval-2026 task. These studies deconstruct the act of ``not answering'' into a set of discrete, observable rhetorical strategies.
+
+For example, \citet{b5} define ``shifting'' as a subtle evasion where the interviewee seemingly accepts the question but ``refocuses'' the question replacing its critical aspect with a more favorable one, a direct analogue to the ``Deflection'' label. They, along with \citet{b6}, identify common patterns like shifts in time, agent, or abstraction level, as well as ``Redirection'' and ``Non-answers''.
+
+\citet{b6} provide the formal pragmatic theory that unites these observations: evasion functions by flouting Grice's Maxims. This framework provides a mechanism for understanding the SemEval-2026 taxonomy: \begin{itemize} \item A response labeled ``Dodging'' or ``Deflection'' is fundamentally flouting the Maxim of Relation (relevance). \item A response labeled ``General'' or ``Partial'' is flouting the Maxim of Quantity (informativeness). \end{itemize}
+
+Other studies provide granular, linguistic-level examples that somewhat map to our labels. \citet{b7} ``non-type-conforming answers'' (e.g., giving a general description instead of a specific number)  aligns  with the ``General'' label. Similarly, Abidin et al. identify ``minimizing the divergence'' (e.g., calling an incident an ``isolated case''), which fits the ``Partial'' or ``General'' labels. These works also categorize confrontational tactics like ``attacking the questioner'' or ``challenging professionalism'', which are forms of ``Dodging'' or ``Deflection''.
+
+While these papers do not propose computational models, nor do they provide annotated datasets which we can utilize for model training, they offer a theoretical underpinning for the taxonomy used in this SemEval-2026 task. Perhaps we can leverage some of their linguistic insights to engineer features or augment our training data. More importantly, they validate the taxonomy's relevance and comprehensiveness for capturing the multifaceted nature of political evasion.
+
+A key computational limitation, noted by the task organizers in \citet{b8}, is that traditional classifiers like BERT are limited to 512 tokens, forcing the truncation of long sQA pairs. This truncation risks cutting off the very part of the answer that contains the evasion. The recent introduction of ModernBERT  directly addresses this. This modernized encoder features a native 8192 sequence length. This expanded context window is highly relevant to our work, as it allows our model to process the entire sQA to capture the full context of a long, complex answer.
+
+Lastly, \citet{b9} offer a valuable domain pre-adaptation strategy using their large dataset of 58,343 Canadian Question Period exchanges. They trained a Sentence-BERT model to measure answer ``quality'' via cosine similarity between question-answer embeddings, learned self-supervisedly by identifying correct answers from negative samples . This is highly relevant because we can pre-train our classifier (like ModernBERT) on their political Q\&A dataset using this same cosine similarity objective. This allows the model to learn the specific discourse patterns of political Q\&As before fine-tuning on the SemEval-2026 evasion task, potentially improving performance.
+
+\section{Dataset}
+
+The data was sourced from 287 unique interview transcripts of US presidents from 2006 to 2023. The transcripts were taken directly from the official White House website.
+
+A significant challenge identified by the authors was the prevalence of ``multi-barrelled'' questions, where interviewers pose multiple, distinct questions within a single turn. They noted that this complicates the annotation, as a politician might clearly answer one part of the question while evading another.
+
+To address this, they adopted a fine-grained decomposition strategy. First, ChatGPT was leveraged to parse the transcripts and break down these complex, multi-part questions into their constituent ``singular QA pairs'' (sQAs). Each sQA pair consists of a single subquestion from the multi-barrelled question and the complete response from the politician, to determine how that particular question was answered in the context of the full response. An example of this decomposition is shown below:
+
+\begin{quote}
+\small % Makes the example text slightly smaller
+\textbf{Original Multi-barrelled Question:} \\
+\textit{Q. Is there a reason your press staff was unaware of that? And what did you say to the Chinese President?}
+
+\smallskip % Adds a small vertical space
+\textbf{Original Full Answer:} \\
+\textit{Well—and they weren't with me the entire time. Look, I made it clear that I thought that China had an obligation to be more forthcoming on exactly what the source of the virus was and where it came from.Yes.}
+
+\smallskip
+
+\textbf{Resulting sQA Pair 1:}
+\begin{itemize}
+    \item \textbf{Sub-question:} \textit{Is there a reason your press staff was unaware of that?}
+    \item \textbf{Full Answer:} \textit{Well—and they weren't with me the entire time. Look, I made it clear that I thought that China had an obligation to be more forthcoming on exactly what the source of the virus was and where it came from.Yes.}
+\end{itemize}
+
+\textbf{Resulting sQA Pair 2:}
+\begin{itemize}
+    \item \textbf{Sub-question:} \textit{What did you say to the Chinese President?}
+    \item \textbf{Full Answer:} \textit{Well—and they weren't with me the entire time. Look, I made it clear that I thought that China had an obligation to be more forthcoming on exactly what the source of the virus was and where it came from.Yes.}
+\end{itemize}
+\end{quote}
+
+The resulting dataset had two splits: a training set with 3,450 rows and a test set with 308 rows, with the important columns being ``interview\_question'', ``interview\_answer'', ``question'' ``clarity\_label'', and ``evasion\_label''.
+
+We noted that the evasion\_label column was empty in the test set. The researchers clarified this was intentional. They found that annotators had disagreements (high variance) when assigning these labels, so they decided against using a single ``ground truth'' label.
+
+Instead, the test set provides the individual labels from three annotators in the ``annotator1'', ``annotator2'', and ``annotator3'' columns. For evasion level prediction, a model's prediction is considered correct if it matches any of these three labels.
+
+Moreover, the dataset exhibited significant class imbalance in both clarity and evasion labels, as shown in the figures below.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{clarity_count.png}
+    \caption{Distribution of clarity level labels in the dataset.}
+    \label{fig:clarity_count}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{evasion_count.png}
+    \caption{Distribution of evasion level labels in the dataset.}
+    \label{fig:evasion_count}
+\end{figure}
+
+
+\section{Methodology}
+
+We propose four distinct architectural approaches to address the CLARITY task: Direct Classification with long-context transformers, Generative Large Language Models (LLMs), Multiple Instance Learning (MIL) with Attention Pooling, and a Natural Language Inference (NLI) re-framing. Additionally, we explore various data augmentation strategies to mitigate the dataset's inherent class imbalance.
+
+\subsection{Task Formulation and Evaluation}
+Given a question $Q$ and an answer $A$, the goal is to predict the clarity label $y_c \in C$ (Subtask 1) and the evasion label $y_e \in E$ (Subtask 2). Due to the significant class imbalance identified in the dataset \citep{b4}, we utilize Macro-F1 score as our primary evaluation metric. To further address this imbalance during training, we experimented with three distinct loss functions across all models: Focal Loss, Weighted Cross-Entropy, and Dice Loss.
+
+\subsection{Direct Classification (ModernBERT)}
+A primary limitation of standard BERT baselines is the 512-token sequence limit, which often necessitates truncating long political responses \citep{b8}. To preserve the full context of the sQA pairs, we utilized ModernBERT \citep{b8}, which supports a native context length of 8192 tokens. We fine-tuned both \texttt{modernbert-base} and \texttt{modernbert-large} by concatenating the question and answer with a separator token $[SEP]$ and feeding the final hidden state of the $[CLS]$ token into a classification head.
+
+\subsection{Multiple Instance Learning (MIL)}
+To address the input length constraint without relying solely on newer architectures, we implemented a Multiple Instance Learning (MIL) framework with Attention Pooling. This approach is particularly relevant for Subtask 2, where the specific "evasion technique" (e.g., a deflection) may occur in a small segment of a long answer.
+
+We split the long answers into overlapping segments. Each segment was processed independently by a frozen encoder (we experimented with BERT, RoBERTa, DeBERTa, and ALBERT) to extract feature vectors. These vectors were aggregated using a learnable Attention Layer, allowing the model to weigh specific segments of the answer more heavily before making a final classification.
+
+\subsection{Natural Language Inference (NLI)}
+For Subtask 1, we hypothesized that "clarity" is fundamentally a measure of logical entailment. We reframed the classification task into a Premise-Hypothesis problem. For every QA pair, we constructed:
+\begin{itemize}
+    \item \textbf{Premise:} The politician's full answer $\{A\}$.
+    \item \textbf{Hypothesis:} "The speaker explicitly answers the Question: $\{Q\}$."
+\end{itemize}
+We utilized \texttt{deberta-v3-large-mnli}, a model pre-trained on NLI tasks. The resulting entailment scores were mapped to clarity labels: \textit{Entailment} $\rightarrow$ Clear Reply; \textit{Contradiction} $\rightarrow$ Clear Non-Reply; and \textit{Neutral} $\rightarrow$ Ambivalent Reply.
+
+\subsection{Generative Approach}
+We explored the capabilities of generative LLMs by fine-tuning \texttt{Llama-3.2-3B}. Due to computational constraints, we utilized 4-bit quantization. The model was prompted to generate the classification label directly given the QA pair.
+
+\subsection{Data Augmentation}
+To improve robustness, we experimented with five augmentation techniques: Random Word Deletion, Synonym Replacement, Oversampling, Contextual Word Replacement, and Back-Translation.
+\begin{itemize}
+    \item \textbf{Contextual Word Replacement:} We utilized the \texttt{nlpaug} library with a Masked Language Model (BERT) to mask and replace words based on context.
+    \item \textbf{Back-Translation:} Using the Gemini 2.5 Flash API, we translated answers from English to German and back to English. We tested two strategies: augmenting a flat 25\% of all classes, and a "Hard Example" strategy where we identified consistently misclassified samples via 5-fold cross-validation and selectively augmented them.
+\end{itemize}
+
+\section{Results and Discussion}
+
+\subsection{Experimental Results}
+Table \ref{tab:results} compares our best architectural approaches against the baseline benchmarks established by the task organizers \citep{b4}. The organizers utilized a Llama-2-70B model trained on a high-performance 4$\times$A100 GPU cluster (160GB VRAM).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llcc}
+\hline
+\textbf{Source} & \textbf{Model} & \textbf{T1 (F1)} & \textbf{T2 (F1)} \\
+\hline
+Baseline & Llama-2-70B & 0.68 & \textbf{0.51} \\
+\hline
+Ours (Gen) & Llama-3.2-3B & 0.57 & - \\
+Ours (Direct) & ModernBERT-L & 0.69 & 0.38 \\
+Ours (MIL) & BERT-L + MIL & 0.65 & 0.46 \\
+\textbf{Ours (NLI)} & \textbf{DeBERTa-v3-L} & \textbf{0.72} & - \\
+\hline
+\end{tabular}
+\caption{Comparison of our best models against the organizers' 70B-parameter baseline. T1 = Subtask 1, T2 = Subtask 2.}
+\label{tab:results}
+\end{table}
+
+\subsection{Comparison with State-of-the-Art}
+A critical finding of our work is the efficiency-performance trade-off compared to the researchers' baseline. The baseline employed a massive Llama-2-70B model requiring a 4$\times$A100 GPU cluster (160GB VRAM) to achieve an F1 of 0.68 on Subtask 1.
+
+In contrast, our NLI-based approach using DeBERTa-v3-large (approx. 400M parameters) achieved a superior F1 score of \textbf{0.72} (+4\%). This demonstrates that for the specific task of binary clarity detection, framing the problem as logical entailment is significantly more effective and computationally efficient than fine-tuning massive generative models. We achieved SOTA-level results on consumer-grade hardware, whereas the baseline required industrial-grade compute.
+
+ However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach (0.46). This suggests that identifying fine-grained linguistic nuances (e.g., distinguishing "Deflection" from "Dodging") benefits from the vast world knowledge and reasoning capabilities embedded in 70B+ parameter models, which smaller discriminative models struggle to capture fully.
+
+\subsection{Performance Analysis}
+
+\subsubsection{Context vs. Segmentation in Evasion}
+For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.46 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the "evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
+
+\subsubsection{The Generative Lag}
+Our generative approach (Llama-3.2-3B) underperformed, achieving only 0.57 F1. We observed overfitting, with performance dropping from 0.57 to 0.50 between epochs. This reinforces our finding that without the massive scale of the researchers' 70B model, generative decoding is less stable than discriminative classification for this task.
+
+\subsection{Limitations and Future Work}
+A significant limitation was the computational cost of the Generative approach (approx. 8 hours/epoch), which restricted our ability to tune hyperparameters. Additionally, while we surpassed the baseline in Clarity detection, the gap in Evasion detection (0.46 vs 0.51) highlights the difficulty of fine-grained classification.
+
+Future work will focus on a hybrid pipeline: utilizing our superior NLI model to determine \textit{if} an evasion occurred (Subtask 1), and exploring parameter-efficient fine-tuning (PEFT) of larger models (7B+) to close the gap on Subtask 2.
+
+
+\bibliography{custom} % This points to custom.bib
+\bibliographystyle{acl_natbib} % This formats it
+\end{document}
