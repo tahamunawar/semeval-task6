@@ -1,0 +1,28 @@
+# --- LaTeX Build Artifacts (Ignore these) ---
+# These are generated automatically when you compile.
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.lof
+*.lot
+
+# --- Final Output ---
+# Standard practice is to ignore the generated PDF to avoid large file history
+# and merge conflicts. If you WANT to track the PDF, remove this line.
+*.pdf
+
+# --- OS & Editor System Files ---
+.DS_Store
+Thumbs.db
+.vscode/
+
+# --- EXCEPTIONS (Force Git to track these if strict rules exist) ---
+# Ensuring these specific style/bib files are never ignored
+!acl.sty
+!acl_natbib.bst
