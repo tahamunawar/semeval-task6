@@ -40,9 +40,9 @@ Subtask1 and Subtask 2 of SemEval-2026 Task 6 focus on predicting the Clarity an
 \textbf{Clarity Level Categories:}
 
 \begin{itemize}
-    \item \textbf{Clear Reply:} Information is explicitly provided.
-    \item \textbf{Clear Non-Reply:} Information is openly refused.
-    \item \textbf{Ambivalent Reply:} The response is related but evasive.
+    \item \textbf{Clear Reply:} The information requested is explicitly provided.
+    \item \textbf{Clear Non-Reply:} The information requested is not given at all.
+    \item \textbf{Ambivalent Reply:} The information requested is given in an incomplete way.
 \end{itemize}
 
 \textbf{Evasion Level Categories:}
@@ -122,7 +122,7 @@ To address this, they adopted a fine-grained decomposition strategy. First, Chat
 \end{itemize}
 \end{quote}
 
-The resulting dataset had two splits: a training set with 3,450 rows and a test set with 308 rows, with the important columns being ``interview\_question'', ``interview\_answer'', ``question'' ``clarity\_label'', and ``evasion\_label''.
+The resulting dataset had two splits: a training set with 3,450 rows and a test set with 308 rows, with the important columns being ``interview\_question'', ``interview\_answer'', ``question'', ``clarity\_label'', and ``evasion\_label''.
 
 We noted that the evasion\_label column was empty in the test set. The researchers clarified this was intentional. They found that annotators had disagreements (high variance) when assigning these labels, so they decided against using a single ``ground truth'' label.
 
@@ -150,34 +150,55 @@ Moreover, the dataset exhibited significant class imbalance in both clarity and 
 We propose four distinct architectural approaches to address the CLARITY task: Direct Classification with long-context transformers, Generative Large Language Models (LLMs), Multiple Instance Learning (MIL) with Attention Pooling, and a Natural Language Inference (NLI) re-framing. Additionally, we explore various data augmentation strategies to mitigate the dataset's inherent class imbalance.
 
 \subsection{Task Formulation and Evaluation}
-Given a question $Q$ and an answer $A$, the goal is to predict the clarity label $y_c \in C$ (Subtask 1) and the evasion label $y_e \in E$ (Subtask 2). Due to the significant class imbalance identified in the dataset \citep{b4}, we utilize Macro-F1 score as our primary evaluation metric. To further address this imbalance during training, we experimented with three distinct loss functions across all models: Focal Loss, Weighted Cross-Entropy, and Dice Loss.
+Given a question $Q$ and an answer $A$, the goal is to predict the clarity label $y_c \in C$ (Subtask 1) and the evasion label $y_e \in E$ (Subtask 2). Following the SemEval task guidelines, we utilize the Macro-F1 score as our primary evaluation metric. Due to the significant class imbalance identified in the dataset \citep{b4}, this metric is well-suited for the task. To further address this imbalance during training, we experimented with three distinct loss functions across all models: Focal Loss, Weighted Cross-Entropy, and Dice Loss.
 
 \subsection{Direct Classification (ModernBERT)}
 A primary limitation of standard BERT baselines is the 512-token sequence limit, which often necessitates truncating long political responses \citep{b8}. To preserve the full context of the sQA pairs, we utilized ModernBERT \citep{b8}, which supports a native context length of 8192 tokens. We fine-tuned both \texttt{modernbert-base} and \texttt{modernbert-large} by concatenating the question and answer with a separator token $[SEP]$ and feeding the final hidden state of the $[CLS]$ token into a classification head.
 
 \subsection{Multiple Instance Learning (MIL)}
-To address the input length constraint without relying solely on newer architectures, we implemented a Multiple Instance Learning (MIL) framework with Attention Pooling. This approach is particularly relevant for Subtask 2, where the specific "evasion technique" (e.g., a deflection) may occur in a small segment of a long answer.
+To address the input length constraint without relying solely on newer architectures, we implemented a Multiple Instance Learning (MIL) framework with Attention Pooling. This approach is particularly relevant for Subtask 2, where the specific ``evasion technique" (e.g., a deflection) may occur in a small segment of a long answer.
 
-We split the long answers into overlapping segments. Each segment was processed independently by a frozen encoder (we experimented with BERT, RoBERTa, DeBERTa, and ALBERT) to extract feature vectors. These vectors were aggregated using a learnable Attention Layer, allowing the model to weigh specific segments of the answer more heavily before making a final classification.
+We split the long answers into overlapping segments, or instances, such that for an input pair $(Q, A)$, the answer $A$ forms a bag of instances $\mathcal{I} = \{I_1, I_2, \dots, I_k\}$.
+
+\begin{itemize}
+    \item \textbf{Input Formatting:} Each instance $I_i$ was constructed by concatenating the full question $Q$ and an answer segment $A_{\text{segment}}$ using the standard BERT format: $I_i = [\texttt{CLS}] \ Q \ [\texttt{SEP}] \ A_{\text{segment}} \ [\texttt{SEP}]$.
+    \item \textbf{Chunking Parameters:} The maximum sequence length for each chunk input was set to $\mathbf{256}$ tokens. We used an overlap (stride) of $\mathbf{160}$ tokens, limiting the total number of chunks to a maximum of $\mathbf{16}$ (i.e., $k \le 16$).
+    \item \textbf{Attention Pooling:} Each instance $I_i$ was processed independently by the encoder to extract a feature vector, $\mathbf{h}_i$ (the final hidden state of the $[\texttt{CLS}]$ token). These vectors were aggregated using a learnable Attention Layer, which calculates weights ($\alpha_i$) to produce a single weighted context vector $\mathbf{c} = \sum_{i=1}^{k} \alpha_i \mathbf{h}_i$ for final classification.
+\end{itemize}
+
+Each segment was processed independently by a frozen encoder (we experimented with BERT, RoBERTa, DeBERTa, and ALBERT) to extract feature vectors. These vectors were aggregated using a learnable Attention Layer, allowing the model to weigh specific segments of the answer more heavily before making a final classification.
 
 \subsection{Natural Language Inference (NLI)}
-For Subtask 1, we hypothesized that "clarity" is fundamentally a measure of logical entailment. We reframed the classification task into a Premise-Hypothesis problem. For every QA pair, we constructed:
+For Subtask 1 (Clarity Prediction), we hypothesized that the concept of ``clarity" is fundamentally related to logical entailment. We effectively reframed the classification task into a three-way Natural Language Inference (NLI) problem. For every Question-Answer pair $(Q, A)$, we constructed an NLI input consisting of a Premise and a Hypothesis:
+
 \begin{itemize}
-    \item \textbf{Premise:} The politician's full answer $\{A\}$.
-    \item \textbf{Hypothesis:} "The speaker explicitly answers the Question: $\{Q\}$."
+    \item \textbf{Premise ($P$):} The politician's full answer $\{A\}$.
+    \item \textbf{Hypothesis ($H$):} ``The speaker explicitly answers the Question: $\{Q\}$."
 \end{itemize}
-We utilized \texttt{deberta-v3-large-mnli}, a model pre-trained on NLI tasks. The resulting entailment scores were mapped to clarity labels: \textit{Entailment} $\rightarrow$ Clear Reply; \textit{Contradiction} $\rightarrow$ Clear Non-Reply; and \textit{Neutral} $\rightarrow$ Ambivalent Reply.
+
+We utilized the specialized NLI model, \texttt{MoritzLaurer/\allowbreak DeBERTa-v3-large-\allowbreak mnli-fever-anli-ling-wanli}, which is pre-trained on various NLI and factual consistency tasks. A key advantage of this model is its capability to handle longer sequences, which we exploited by setting the maximum input sequence length to $\mathbf{2048}$ tokens.
+
+The resulting NLI predictions were mapped directly to the three clarity labels:
+\begin{itemize}
+    \item \textbf{Entailment} $\rightarrow$ Clear Reply
+    \item \textbf{Contradiction} $\rightarrow$ Clear Non-Reply
+    \item \textbf{Neutral} $\rightarrow$ Ambivalent Reply
+\end{itemize}
+
+This NLI framing proved highly effective and logically congruent with Subtask 1, as the three native NLI output classes (Entailment, Contradiction, Neutral) directly mapped to the three required clarity labels. However, this approach was not extended to Subtask 2. Since Subtask 2 requires predicting one of nine distinct evasion technique labels, we determined that there was no clear or principled way to construct a single Hypothesis-Premise relationship that could logically correspond to this larger, multi-class set of evasion categories.
 
 \subsection{Generative Approach}
-We explored the capabilities of generative LLMs by fine-tuning \texttt{Llama-3.2-3B}. Due to computational constraints, we utilized 4-bit quantization. The model was prompted to generate the classification label directly given the QA pair.
+We explored the capabilities of generative LLMs by fine-tuning the \texttt{Llama-3.2-3B} instruct model. Due to computational constraints, we used 4-bit quantization (QLoRA). The inputs consisted of each question--answer pair provided directly to the model, and it was prompted to generate the classification label. For training stability and efficiency, we applied LoRA (Low-Rank Adaptation) with an \textbf{r} value of \textbf{16} and an \textbf{alpha} of \textbf{32}. 
 
 \subsection{Data Augmentation}
 To improve robustness, we experimented with five augmentation techniques: Random Word Deletion, Synonym Replacement, Oversampling, Contextual Word Replacement, and Back-Translation.
 \begin{itemize}
+    \item \textbf{Random Word Deletion:} We utilized the \texttt{nlpaug} library with a random word deletion action. This method randomly deleted a fixed percentage of words in the answer text, generating augmented samples equivalent to $25\%$ of the original count for each of the three clarity classes.
+    \item \textbf{Synonym Replacement:} Using the \texttt{nlpaug} library and the WordNet corpus, words were randomly replaced with their synonyms with a probability of $20\%$ ($\text{aug\_p}=0.2$). This technique was used to generate augmented samples equal to $25\%$ of the original training set size for each clarity class.
+    \item \textbf{Oversampling (Weighted Random Sampling):} This technique was applied to address class imbalance by ensuring all classes contributed equally to the training process. Instead of repeating rare samples, we calculated a sampling weight for each instance in the training data based on the inverse frequency of its class. This weighting scheme made the model effectively sample rare classes more frequently during each training epoch.
     \item \textbf{Contextual Word Replacement:} We utilized the \texttt{nlpaug} library with a Masked Language Model (BERT) to mask and replace words based on context.
-    \item \textbf{Back-Translation:} Using the Gemini 2.5 Flash API, we translated answers from English to German and back to English. We tested two strategies: augmenting a flat 25\% of all classes, and a "Hard Example" strategy where we identified consistently misclassified samples via 5-fold cross-validation and selectively augmented them.
+    \item \textbf{Back-Translation:} Using the Gemini 2.5 Flash API, we translated answers from English to German and back to English. We tested two strategies: augmenting a flat $25\%$ of all classes, and a ``Hard Example" strategy where we identified consistently misclassified samples via 5-fold cross-validation and selectively augmented them.
 \end{itemize}
-
 \section{Results and Discussion}
 
 \subsection{Experimental Results}
@@ -192,36 +213,39 @@ Table \ref{tab:results} compares our best architectural approaches against the b
 \hline
 Baseline & Llama-2-70B & 0.68 & \textbf{0.51} \\
 \hline
-Ours (Gen) & Llama-3.2-3B & 0.57 & - \\
-Ours (Direct) & ModernBERT-L & 0.69 & 0.38 \\
-Ours (MIL) & BERT-L + MIL & 0.65 & 0.46 \\
-\textbf{Ours (NLI)} & \textbf{DeBERTa-v3-L} & \textbf{0.72} & - \\
+Ours & (Gen) Llama-3.2-3B & 0.57 & - \\
+     & (Direct) ModernBERT-L & 0.69 & 0.38 \\
+     & (MIL) BERT-L + MIL & 0.65 & 0.46 \\
+     & \textbf{(NLI) DeBERTa-v3-L} & \textbf{0.72} & - \\
 \hline
 \end{tabular}
 \caption{Comparison of our best models against the organizers' 70B-parameter baseline. T1 = Subtask 1, T2 = Subtask 2.}
 \label{tab:results}
 \end{table}
 
+\vspace{-2em}
+
 \subsection{Comparison with State-of-the-Art}
 A critical finding of our work is the efficiency-performance trade-off compared to the researchers' baseline. The baseline employed a massive Llama-2-70B model requiring a 4$\times$A100 GPU cluster (160GB VRAM) to achieve an F1 of 0.68 on Subtask 1.
 
-In contrast, our NLI-based approach using DeBERTa-v3-large (approx. 400M parameters) achieved a superior F1 score of \textbf{0.72} (+4\%). This demonstrates that for the specific task of binary clarity detection, framing the problem as logical entailment is significantly more effective and computationally efficient than fine-tuning massive generative models. We achieved SOTA-level results on consumer-grade hardware, whereas the baseline required industrial-grade compute.
+In contrast, our NLI-based approach using DeBERTa-v3-large (approx. 400M parameters) achieved a superior F1 score of \textbf{0.72} (+4\%). This demonstrates that for the specific task of clarity detection, framing the problem as logical entailment is significantly more effective and computationally efficient than fine-tuning massive generative models. We achieved SOTA-level results on consumer-grade hardware, whereas the baseline required industrial-grade compute.
 
- However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach (0.46). This suggests that identifying fine-grained linguistic nuances (e.g., distinguishing "Deflection" from "Dodging") benefits from the vast world knowledge and reasoning capabilities embedded in 70B+ parameter models, which smaller discriminative models struggle to capture fully.
+However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach (0.46). This suggests that identifying fine-grained linguistic nuances (e.g., distinguishing ``Deflection" from ``Dodging") benefits from the vast world knowledge and reasoning capabilities embedded in 70B+ parameter models, which smaller discriminative models struggle to capture fully.
 
 \subsection{Performance Analysis}
 
 \subsubsection{Context vs. Segmentation in Evasion}
-For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.46 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the "evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
+For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.46 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the ``evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
 
 \subsubsection{The Generative Lag}
-Our generative approach (Llama-3.2-3B) underperformed, achieving only 0.57 F1. We observed overfitting, with performance dropping from 0.57 to 0.50 between epochs. This reinforces our finding that without the massive scale of the researchers' 70B model, generative decoding is less stable than discriminative classification for this task.
+Our generative approach (\texttt{Llama-3.2-3B}) underperformed, achieving only 0.57 F1. We observed early overfitting, with performance dropping from 0.57 to 0.50 between epochs. This reinforces our finding that without the massive scale of the researchers' $70\text{B}$ model, generative decoding is less stable than discriminative classification for this task.
 
 \subsection{Limitations and Future Work}
-A significant limitation was the computational cost of the Generative approach (approx. 8 hours/epoch), which restricted our ability to tune hyperparameters. Additionally, while we surpassed the baseline in Clarity detection, the gap in Evasion detection (0.46 vs 0.51) highlights the difficulty of fine-grained classification.
+A significant limitation was the computational cost of the Generative approach (approx. $\mathbf{8}$ hours/epoch), which severely restricted our ability to tune hyperparameters. We faced considerable challenges with resource allocation, as the long training time often led to Kaggle platform timeouts. Consequently, we were not able to run the model to completion and hyperparameter tuning was severely limited by these compute constraints. Because of the poor score and the computation cost, we did not use the generative approach for Subtask 2.
 
-Future work will focus on a hybrid pipeline: utilizing our superior NLI model to determine \textit{if} an evasion occurred (Subtask 1), and exploring parameter-efficient fine-tuning (PEFT) of larger models (7B+) to close the gap on Subtask 2.
+In future work, we plan to use Synthetic Data Generation as an augmentation strategy. We will prompt a large instruction-tuned model (e.g., Gemini 2.5 Flash API or GPT-5-mini) using a few-shot setup. For each of the 3 Clarity Level classes and 9 Evasion Level classes, we will provide the model with \textbf{5} manually selected question--answer examples representing that class. The model will then be instructed to generate new question--answer pairs that strictly follow the target label, allowing us to create high-quality synthetic samples to expand our training dataset.
 
+We also intend to explore smaller open-source generative LLMs (e.g., Qwen, Mistral) that have shown performance competitive with or exceeding larger models, to assess whether the strategy of using generative LLMs to predict Evasion labels is still feasible or not.
 
 \bibliography{custom} % This points to custom.bib
 \bibliographystyle{acl_natbib} % This formats it
