@@ -25,7 +25,7 @@
 \maketitle
 
 \begin{abstract}
-This paper details our submission for SemEval-2026 Task 6: CLARITY - Unmasking Political Question Evasions. The task focuses on categorizing question-answer pairs from political interviews using a two-level hierarchical taxonomy. The objective is to classify each response by both its high-level ``clarity'' and its specific fine-grained ``evasion technique''. This work aims to advance the automated detection of political equivocation. We present novel methodologies designed to build upon the baseline models from \citet{b4} and improve classification performance on this task.
+This paper details our submission for SemEval-2026 Task 6: CLARITY – Unmasking Political Question Evasions. The goal of the task is to use political interviews and classify question–answer pairs from them using a two-level hierarchical taxonomy. The aim is to have each response classified by its high-level “clarity” and its specific fine-grained “evasion technique.” Below we present novel methodologies to build up the baseline models from \citet{b4} and to improve classification performance on this task.
 \end{abstract}
 
 \section{Introduction}
@@ -68,11 +68,11 @@ Subtask1 and Subtask 2 of SemEval-2026 Task 6 focus on predicting the Clarity an
 
 \section{Literature Review}
 
-The automatic detection of political question evasion draws on research in ambiguity detection and political text analysis. This section reviews key studies that inform our approach.
+The important studies that have influenced our methodology are highlighted in this section.
 
-\citet{b1} address ambiguous question identification in LLM QA, noting that LLMs often generate coherent but multi-interpretable responses—a common political tactic. Their method uses self-consistency prompting to produce multiple answers, then a lightweight Random Forest measures answer variance to predict ambiguity. This approach outperforms prompt/larger transformer baselines, especially with limited labeled data. This technique is relevant because political evasion often involves subtle answer ambiguity, and their success with low-resource data is applicable to real-world political constraints.
+Examining ambiguous question identification in LLM based QA, \citet{b1} note that models often produce coherent but multi faceted responses, a pattern that also characterizes political evasiveness. To detect ambiguity, their approach uses self consistency prompting to elicit multiple responses, followed by a lightweight Random Forest that assesses variance across those responses. This approach outperforms larger transformer baselines and prompt based methods, particularly in low resource settings. Since political evasion frequently relies on subtle ambiguity, their findings are especially relevant, and their demonstrated effectiveness with limited labeled data aligns well with real world political constraints.
 
-\citet{b2} examine how well language models handle ambiguity through the AMBIENT benchmark, a linguist-annotated dataset of lexical, syntactic, and pragmatic ambiguities, including political claims. They find that even advanced models like GPT-4 struggle to disambiguate meanings as effectively as humans. However, fine-tuned multilabel NLI models can flag ambiguous or misleading claims “in the wild.” This insight is crucial for our project: political evasion frequently relies on ambiguity, and the limits of current models highlight the need for domain-specific detection methods.
+\cite{b2} use the AMBIENT benchmark, a linguist annotated dataset of lexical, syntactic, and pragmatic ambiguities that includes political claims, to evaluate how well language models handle ambiguity. They find that even advanced models such as GPT-4 struggle to distinguish meanings at a human level. However, refined multilabel NLI models can successfully identify claims that are ambiguous or deceptive in the wild. This insight is important for our project because political evasion often relies on ambiguity, and the limitations of existing models highlight the need for domain specific detection techniques.
 
 \citet{b3} survey the use of deep learning in political text analysis, tracing the shift from feature-engineered models to contextual transformers such as BERT. They show that deep models capture nuance and context, essential for interpreting political communication, where subtext and intent are key. Their discussion of transfer learning, annotation efficiency, and ethical issues underscores the importance of scalable and transparent systems for tasks like evasion detection.
 
