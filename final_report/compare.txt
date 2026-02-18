@@ -1,0 +1,32 @@
+\subsection{Enhanced Natural Language Inference (NLI)}
+For Subtask 1 (Clarity Prediction), we hypothesized that the concept of ``clarity" is fundamentally related to logical entailment. We effectively reframed the classification task into a three-way Natural Language Inference (NLI) problem. For every Question-Answer pair $(Q, A)$, we constructed an NLI input consisting of a Premise and a Hypothesis:
+
+\begin{itemize}
+    \item \textbf{Premise ($P$):} The politician's full answer $\{A\}$.
+    \item \textbf{Hypothesis ($H$):} ``Within this response, the speaker directly answers the specific question `$\{Q\}$' with clear and complete information, without evasion or ambiguity regarding this particular question."
+\end{itemize}
+
+We utilized the specialized NLI model, \texttt{MoritzLaurer/\allowbreak DeBERTa-v3-large-\allowbreak mnli-fever-anli-ling-wanli}, which is pre-trained on various NLI and factual consistency tasks. While Thomas et al. (2024) noted that traditional encoder-only classifiers like BERT are constrained by a 512-token limit, we circumvented this by exploiting the relative position embeddings used in DeBERTa-v3. Unlike absolute position embeddings, relative embeddings allow the model to generalize to longer sequences beyond 512 tokens, provided sufficient memory is allocated. We set the maximum input sequence length to $\mathbf{2048}$ tokens to capture the full context of long political interviews.
+
+\subsubsection{Adversarial Weight Perturbation (AWP)}
+To improve generalization and robustness against the varied phrasing of political responses, we implemented \textbf{Adversarial Weight Perturbation (AWP)} \cite{cite: nli_awp.ipynb}. AWP regularizes the model by seeking a flatter minimum in the loss landscape through calculated noise. During the backward pass, we calculate an adversarial perturbation $\delta$ for the model weights $\theta$ by maximizing the loss:
+\begin{equation}
+\theta_{adv} = \theta + \epsilon \frac{\nabla_\theta \mathcal{L}(\theta)}{\|\nabla_\theta \mathcal{L}(\theta)\|_2}
+\end{equation}
+where $\epsilon$ is set to $10^{-3}$ starting from the second epoch \cite{cite: nli_awp.ipynb}. This forces the model to learn semantic features that are invariant to small shifts in parameter space, mitigating overfitting on hard examples \cite{cite: nli_awp.ipynb}.
+
+\subsubsection{Hybrid Probability Calibration and Blending}
+Initial experiments revealed significant semantic overlap between the \textit{Clear Reply} and \textit{Ambivalent} classes, leading to a performance bottleneck. We observed that different calibration methods yielded distinct performance biases: \textbf{Isotonic Regression} ($P_{iso}$) acted as a conservative estimator, providing high precision ($0.84$) for clear replies, while \textbf{Temperature Scaling} ($P_{ts}$) with an optimal $T=1.23$ served as a liberal estimator, recovering recall ($0.78$) by softening probability distributions \cite{cite: yoooo.ipynb}.
+
+To reconcile these biases, we implemented a \textbf{Weighted Probability Blend} (Soft Voting) \cite{cite: yoooo.ipynb}. The final probability distribution $P_{final}$ is the weighted average of the two calibrated distributions:
+\begin{equation}
+P_{final} = w_{iso} P_{iso} + (1 - w_{iso}) P_{ts}
+\end{equation}
+Through a grid search on the validation set, we determined the optimal weighting factor to be $w_{iso} = 0.59$ \cite{cite: yoooo.ipynb}. This hybrid strategy effectively decoupled the semantic overlap, resulting in a final \textbf{Macro-F1 score of 0.7707} \cite{cite: yoooo.ipynb}.
+
+The resulting predictions were mapped to the clarity labels:
+\begin{itemize}
+    \item \textbf{Entailment} $\rightarrow$ Clear Reply
+    \item \textbf{Contradiction} $\rightarrow$ Clear Non-Reply
+    \item \textbf{Neutral} $\rightarrow$ Ambivalent Reply
+\end{itemize}
