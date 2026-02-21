@@ -10,7 +10,7 @@
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{url}
-
+\raggedbottom
 % ACL titles should be in Title Case, not ALL CAPS
 % center title
 \title{HU at SemEval-2026 Task 6: A Hybrid Discriminative Modeling of Political Clarity and Evasion}
@@ -72,19 +72,19 @@ Our work for SemEval-2026 Task 6 tackles both subtasks by predicting labels acro
 
 \section{Literature Review}
 
-Identifying political evasion is challenging because models often produce coherent but multifaceted responses to ambiguous questions \citep{b1}. While advanced models still struggle to distinguish pragmatic meanings at a human level, refined Natural Language Inference (NLI) models show promise in identifying deceptive claims \citep{b2}. In political science, the field has shifted from feature engineering to contextual transformers like BERT to capture the nuance and intent essential for interpreting communication \citep{b3}.
+Research on ambiguity detection in question answering (QA) provides useful foundations for modeling political evasion. \citet{b1} show that large language models often generate coherent yet multi-faceted responses, a pattern similar to evasive political communication. Their self-consistency prompting framework combined with a lightweight Random Forest classifier outperforms larger transformer baselines, particularly in low-resource settings. Similarly, \citet{b2} introduce the AMBIENT benchmark, a linguistically annotated dataset covering lexical, syntactic, and pragmatic ambiguity, including political claims. They demonstrate that even advanced models struggle to resolve ambiguity at human-level performance, while multi-label NLI models perform more effectively, highlighting the need for domain-specific approaches. More broadly, \citet{b3} survey deep learning methods for political text analysis, emphasizing the role of contextual transformers and transfer learning in capturing nuanced political language.
 
-The theoretical basis for evasion, responding without answering, is grounded in rhetorical strategies such as ``shifting,'' where an interviewee refocuses a critical question to a more favorable topic \citep{b5}. This behavior is formally explained as flouting Grice's Maxims; for instance, labels like ``Dodging'' or ``Deflection'' flout the Maxim of Relation (relevance), while ``General'' or ``Partial'' labels flout the Maxim of Quantity (informativeness) \citep{b6, b7}. 
+Complementary work from linguistics and political science provides theoretical grounding for evasion taxonomies such as the SemEval-2026 framework. \citet{b5} define ``shifting'' as an evasive strategy in which speakers appear to address a question while subtly refocusing it, corresponding closely to the ``Deflection'' category. Together with \citet{b6}, they identify systematic patterns such as temporal or agent shifts, abstraction changes, and non-answers. \citet{b6} further interpret evasion through Gricean pragmatics, arguing that evasive responses arise from flouting conversational maxims, particularly relevance and informativeness, which aligns with categories such as Dodging, Deflection, General, and Partial replies. Additional linguistic analyses provide fine-grained examples that map to these categories, including ``non-type-conforming answers'' and divergence-minimization strategies \citep{b7}.
 
-A significant technical constraint in this domain is that traditional encoders are limited to 512 tokens, often forcing the truncation of long, complex political answers and potentially losing the specific segment containing the evasion tactic \citep{b8}. We address this by utilizing ModernBERT \citep{b8}, leveraging its native 8192-token context window to process complete question-answer pairs.
+Unlike traditional transformers limited to 512 tokens, ModernBERT supports sequences up to 8192 tokens. This addresses the risk of omitting critical evasive content due to truncation , enabling full-context modeling of lengthy political responses. \cite{b8}
 
-% Lastly, \citet{b9} introduce a useful domain pre-adaptation strategy using their 58,343 Canadian Question Period exchanges. They train a Sentence-BERT model with a self-supervised cosine-similarity objective to learn Q\&A  quality. We can similarly pre-train our classifier on their political Q\&A data to capture domain-specific discourse patterns before fine-tuning on the SemEval-2026 evasion task, potentially improving performance.
+Finally, \citet{b9} introduce a self-supervised approach for assessing answer quality in political question-answer sessions by training language models to retrieve correct answers from candidate sets using only question text. Using 58,343 parliamentary exchanges from the Canadian House of Commons, they show that meaningful discourse representations can be learned without additional human annotation, suggesting that large-scale political QA corpora may provide useful domain signals for downstream question-response modeling tasks.
 
 \section{Dataset}
 
-The dataset comprises 287 unique US presidential interview transcripts (2006-2023) sourced from the official White House website. To handle "multi-barrelled" questions, the organizers used ChatGPT-3.5 Turbo to decompose turns into constituent singular QA pairs (sQAs). Our final processed data consists of a 3,450-row training set and a 308-row test set. Both Clarity and Evasion labels exhibit significant class imbalance, as shown in the figures below.
+Sourced from the White House (2006–2023), the dataset includes 287 presidential interview transcripts decomposed via ChatGPT-3.5 Turbo into singular QA pairs (sQAs). The final processed data comprises 3,450 training and 308 test rows, both characterized by significant class imbalance in Clarity and Evasion labels
 
-For Subtask 2 (Evasion), the test set lacks a single ground truth due to high inter-annotator variance. Instead, it contains labels from three separate annotators. Following task guidelines, a model's prediction is considered correct if it matches any of the three provided labels.
+Due to high inter-annotator variance, Subtask 2 (Evasion) uses three ground-truth labels per test instance. Per task guidelines, a prediction is correct if it matches any of the three.
 
 % An example of this decomposition is shown below:
 
@@ -137,13 +137,13 @@ For Subtask 2 (Evasion), the test set lacks a single ground truth due to high in
 
 \section{Methodology}
 
-We propose six distinct architectural approaches to address the CLARITY task. Additionally, we explore various data augmentation strategies to mitigate the dataset's inherent class imbalance.
+We propose six architectural approaches for this task and explore data augmentation strategies to mitigate class imbalance.
 
 \subsection{Task Formulation and Evaluation}
 Given a question $Q$ and an answer $A$, the objective is to predict the high-level clarity label (Subtask 1) and the fine-grained evasion label (Subtask 2). We utilize Macro-F1 as the primary evaluation metric. To mitigate class imbalance, we experimented with Focal Loss, Weighted Cross-Entropy, and Dice Loss across all architectural variants.
 
 \subsection{Direct Classification (ModernBERT)}
-Standard BERT baselines are limited to 512 tokens, often necessitating the truncation of long political responses \citep{b4}. To preserve the full context of sQA pairs, we fine-tune \texttt{modernbert-base} and \texttt{large}, leveraging their native 8192-token sequence length to capture the complete interaction within a single classification head \citep{b8}.
+To preserve the full context of sQA pairs, we fine-tune \texttt{modernbert-base} and \texttt{large}, leveraging their native 8192-token sequence length to capture the complete interaction within a single classification head \citep{b8}, without having to truncate long political responses
 
 \subsection{Multiple Instance Learning (MIL)}
 To address the input length constraint without relying solely on newer architectures, we implemented a Multiple Instance Learning (MIL) framework with Attention Pooling. This approach is particularly relevant for Subtask 2, where the specific ``evasion technique" (e.g., a deflection) may occur in a small segment of a long answer.
@@ -183,7 +183,7 @@ with $\epsilon = 10^{-3}$ starting from the second epoch.
 To reconcile biases between different calibration methods, we implemented a Weighted Probability Blend (Soft Voting). We utilized Isotonic Regression ($P_{iso}$) to act as a conservative estimator and Temperature Scaling ($P_{ts}$) to serve as a liberal estimator by softening probability distributions. The final probability distribution $P_{final}$ is the weighted average of the two calibrated distributions:
 $$P_{final} = w_{iso} P_{iso} + (1 - w_{iso}) P_{ts}$$
 
-This NLI framing worked well for Subtask 1 because its three output classes aligned directly with the three clarity labels. We did not extend it to Subtask 2, which involves nine evasion categories, because there is no coherent way to design a single premise–hypothesis formulation that meaningfully maps onto such a large, diverse label set.
+This NLI formulation was effective for Subtask 1 because its three outputs aligned directly with the clarity labels. We did not extend it to Subtask 2, which includes nine evasion categories, as designing a single coherent premise–hypothesis mapping for such a diverse label set is challenging.
 
 \subsection{Generative Approach}
 We explored the capabilities of generative LLMs by fine-tuning the \texttt{Llama-3.2-3B} instruct model. Due to computational constraints, we used 4-bit quantization (QLoRA). The inputs consisted of each question--answer pair provided directly to the model, and it was prompted to generate the classification label. For training stability and efficiency, we applied LoRA (Low-Rank Adaptation) with an \textbf{r} value of \textbf{16} and an \textbf{alpha} of \textbf{32}. 
@@ -260,7 +260,9 @@ A critical finding of our work is the efficiency-performance trade-off compared 
 
 In contrast, our NLI-based approach using DeBERTa-v3-large (approx. 400M parameters) achieved a final evaluation F1 score of \textbf{0.81}. This demonstrates that for the specific task of clarity detection, framing the problem as logical entailment is significantly more effective and computationally efficient than fine-tuning massive generative models. 
 
-However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach \textbf{0.45}. This suggests that identifying fine-grained linguistic nuances (e.g., distinguishing ``Deflection" from ``Dodging") benefits from the vast world knowledge and reasoning capabilities embedded in 70B+ parameter models, which smaller discriminative models struggle to capture fully.
+However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach \textbf{0.45}. We attribute this to the semantic granularity required for evasion classification. Subtask 2 labels (e.g., "Deflection" vs. "Dodging") often hinge on subtle pragmatic flouting rather than clear lexical shifts.
+
+Our MIL framework uses attention pooling to isolate discriminative segments, but this "segment-first" approach may lose the broader rhetorical arc that a 70B-parameter model captures through its deeper attention layers. The 70B model's scale allows it to model complex cross-attentions between the question's intent and the response's global structure, a level of linguistic nuance that smaller discriminative models appear to lack.
 
 \subsection{Performance Analysis}
 
@@ -277,6 +279,8 @@ Our generative approach (\texttt{Llama-3.2-3B}) underperformed, achieving only 0
 The data augmentation strategies in Section 4.8 did not improve Macro-F1 for either Subtask 1 or 2.
 
 We attribute this to the \textit{fragility of political nuance}. Political evasion depends on subtle rhetorical cues (e.g., ``shifting'' or ``flouting Gricean Maxims''), making class boundaries highly sensitive to perturbations. This is consistent with \citet{b4}, who reported low inter-annotator agreement ($\kappa = 0.48$) and difficulty distinguishing semantically proximate categories such as \textit{General} and \textit{Implicit}. Such inherent ambiguity likely caused both lexical augmentation and LLM-generated data to introduce noise rather than useful diversity, explaining the lack of performance gains.
+
+We also experimented with intermediate domain pre-training on external political question–answer data (as described in Section~2). However, this did not yield measurable improvements, likely because the source domain (parliamentary proceedings) differs substantially from the target domain (presidential interviews), limiting transfer effectiveness given the small downstream dataset.
 
 \begin{table}[h]
 \centering
@@ -314,6 +318,8 @@ A primary challenge in our experimentation was the significant computational dis
 % In future work, we plan to use Synthetic Data Generation as an augmentation strategy. We will prompt a large instruction-tuned model (e.g., Gemini 2.5 Flash API or GPT-5-mini) using a few-shot setup. For each of the 3 Clarity Level classes and 9 Evasion Level classes, we will provide the model with \textbf{5} manually selected question--answer examples representing that class. The model will then be instructed to generate new question--answer pairs that strictly follow the target label, allowing us to create high-quality synthetic samples to expand our training dataset.
 
 % We also intend to explore smaller open-source generative LLMs (e.g., Qwen, Mistral) that have shown performance competitive with or exceeding larger models, to assess whether the strategy of using generative LLMs to predict Evasion labels is still feasible or not.
+
+\pagebreak
 
 \bibliography{custom} % This points to custom.bib
 \end{document}
