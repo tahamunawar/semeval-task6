@@ -27,7 +27,7 @@
 \maketitle
 
 \begin{abstract}
-This paper details our submission for SemEval-2026 Task 6: CLARITY – Unmasking Political Question Evasions. The goal of the task is to use political interviews and classify question–answer pairs from them using a two-level hierarchical taxonomy. The aim is to have each response classified by its high-level “clarity” and its specific fine-grained “evasion technique.” Below we present novel methodologies to build up the baseline models from \citet{b4} and to improve classification performance on this task. Our best-performing models achieve macro-F1 scores of 0.81 on Subtask 1 and 0.45 on Subtask 2.
+We describe our submission to SemEval-2026 Task 6: CLARITY, which aims to classify political question–answer pairs by response clarity and evasive technique. We investigate several approaches, including long-context transformers, multiple instance learning, hierarchical multi-task models, and a natural language inference (NLI) formulation. The NLI model achieves the best performance on Subtask 1 (macro-F1 0.81), while an attention-based MIL model performs best on Subtask 2 (macro-F1 0.45). Our findings demonstrate the benefits of entailment-based modeling for clarity prediction and localized reasoning for evasion detection under limited computational resources.
 \end{abstract}
 
 \section{Introduction}
@@ -140,10 +140,10 @@ Due to high inter-annotator variance, Subtask 2 (Evasion) uses three ground-trut
 We propose six architectural approaches for this task and explore data augmentation strategies to mitigate class imbalance.
 
 \subsection{Task Formulation and Evaluation}
-Given a question $Q$ and an answer $A$, the objective is to predict the high-level clarity label (Subtask 1) and the fine-grained evasion label (Subtask 2). We utilize Macro-F1 as the primary evaluation metric. To mitigate class imbalance, we experimented with Focal Loss, Weighted Cross-Entropy, and Dice Loss across all architectural variants.
+Given a question $Q$ and an answer $A$, the objective is to predict the high-level clarity label (Subtask 1) and the fine-grained evasion label (Subtask 2). We utilize macro-F1 as the primary evaluation metric. To mitigate class imbalance, we experimented with Focal Loss, Weighted Cross-Entropy, and Dice Loss across all architectural variants.
 
 \subsection{Direct Classification (ModernBERT)}
-To preserve the full context of sQA pairs, we fine-tune \texttt{modernbert-base} and \texttt{large}, leveraging their native 8192-token sequence length to capture the complete interaction within a single classification head \citep{b8}, without having to truncate long political responses
+To preserve the full context of sQA pairs, we fine-tune \texttt{ModernBERT-base} and \texttt{large}, leveraging their native 8192-token sequence length to capture the complete interaction within a single classification head \citep{b8}, without having to truncate long political responses.
 
 \subsection{Multiple Instance Learning (MIL)}
 To address the input length constraint without relying solely on newer architectures, we implemented a Multiple Instance Learning (MIL) framework with Attention Pooling. This approach is particularly relevant for Subtask 2, where the specific ``evasion technique" (e.g., a deflection) may occur in a small segment of a long answer.
@@ -270,13 +270,13 @@ Our MIL framework uses attention pooling to isolate discriminative segments, but
 For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.46 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the ``evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
 
 \subsubsection{The Trade-off of Hierarchical Constraints}
-While the Multi-Task Hierarchical Gating (MTL) and Hierarchy-Aware Global Model (HiAGM) were designed to explicitly model the taxonomic dependencies described in Section 4.6 and 4.7 , they achieved lower Macro-F1 scores (0.64 and 0.52 respectively) on Subtask 1 compared to the NLI approach. We observe that the Hierarchical Consistency Loss ($\mathcal{L}_{cons}$) and the post-hoc deterministic inference used in HiAGM  may have been overly restrictive. By forcing the model to strictly adhere to the parent-child relationship, we likely introduced a "bottleneck" where errors in fine-grained evasion detection (Subtask 2) propagated upward, penalizing the clarity prediction (Subtask 1). In contrast, the NLI model's flexibility to treat clarity as a logical entailment problem allowed for better generalization across varied presidential rhetorical styles.
+While the Multi-Task Hierarchical Gating (MTL) and Hierarchy-Aware Global Model (HiAGM) were designed to explicitly model the taxonomic dependencies described in Section 4.6 and 4.7 , they achieved lower macro-F1 scores (0.64 and 0.52 respectively) on Subtask 1 compared to the NLI approach. We observe that the Hierarchical Consistency Loss ($\mathcal{L}_{cons}$) and the post-hoc deterministic inference used in HiAGM  may have been overly restrictive. By forcing the model to strictly adhere to the parent-child relationship, we likely introduced a "bottleneck" where errors in fine-grained evasion detection (Subtask 2) propagated upward, penalizing the clarity prediction (Subtask 1). In contrast, the NLI model's flexibility to treat clarity as a logical entailment problem allowed for better generalization across varied presidential rhetorical styles.
 
 \subsubsection{The Generative Lag}
 Our generative approach (\texttt{Llama-3.2-3B}) underperformed, achieving only 0.57 F1. We observed early overfitting, with performance dropping from 0.57 to 0.50 between epochs. This reinforces our finding that without the massive scale of the researchers' $70\text{B}$ model, generative decoding is less stable than discriminative classification for this task.
 
 \subsubsection{Inefficacy of Augmentation}
-The data augmentation strategies in Section 4.8 did not improve Macro-F1 for either Subtask 1 or 2.
+The data augmentation strategies in Section 4.8 did not improve macro-F1 for either Subtask 1 or 2.
 
 We attribute this to the \textit{fragility of political nuance}. Political evasion depends on subtle rhetorical cues (e.g., ``shifting'' or ``flouting Gricean Maxims''), making class boundaries highly sensitive to perturbations. This is consistent with \citet{b4}, who reported low inter-annotator agreement ($\kappa = 0.48$) and difficulty distinguishing semantically proximate categories such as \textit{General} and \textit{Implicit}. Such inherent ambiguity likely caused both lexical augmentation and LLM-generated data to introduce noise rather than useful diversity, explaining the lack of performance gains.
 
