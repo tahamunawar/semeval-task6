@@ -27,7 +27,7 @@
 \maketitle
 
 \begin{abstract}
-We describe our submission to SemEval-2026 Task 6: CLARITY, which aims to classify political question–answer pairs by response clarity and evasive technique. We investigate several approaches, including long-context transformers, multiple instance learning, hierarchical multi-task models, and a natural language inference (NLI) formulation. The NLI model achieves the best performance on Subtask 1 (macro-F1 0.81), while an attention-based MIL model performs best on Subtask 2 (macro-F1 0.45). Our findings demonstrate the benefits of entailment-based modeling for clarity prediction and localized reasoning for evasion detection under limited computational resources.
+We describe our submission to SemEval-2026 Task 6: CLARITY, which aims to classify political question--answer pairs by response clarity and evasive technique. We investigate several approaches, including long-context transformers, multiple instance learning, hierarchical multi-task models, and a natural language inference (NLI) formulation. On the development set, our best-performing NLI model achieves a macro-F1 of 0.79 for Subtask 1, while our best attention-based MIL model achieves a macro-F1 of 0.43 for Subtask 2. On the hidden evaluation set, our official submission obtains macro-F1 scores of 0.81 for Subtask 1 and 0.45 for Subtask 2. Our findings demonstrate the benefits of entailment-based modeling for clarity prediction and localized reasoning for evasion detection under limited computational resources.
 \end{abstract}
 
 \section{Introduction}
@@ -35,7 +35,9 @@ In high-stakes public discourse, particularly political interviews, the clarity 
 
 This challenge was formalized by \citet{b4} in ``I Never Said That'': A Dataset, Taxonomy and Baselines on Response Clarity Classification, which asks: \textbf{How can we automatically evaluate the clarity of a response with respect to its corresponding question?} To address this, the authors introduced a two-level hierarchical taxonomy (Fig.~\ref{fig:taxonomy}). The first level, Clarity, captures the overall directness of a response, while the second level, Evasion, identifies the specific linguistic strategy employed.
 
-Our work for SemEval-2026 Task 6 tackles both subtasks by predicting labels across this hierarchical taxonomy.
+Our work addresses SemEval-2026 Task 6: CLARITY \citep{b10}, tackling both subtasks by predicting labels across this hierarchical taxonomy.
+
+To support reproducibility, our code and experiment scripts are publicly available at \url{https://github.com/tahamunawar/semeval-task6}. The repository includes model-specific training configurations, including learning rates, batch sizes, maximum sequence lengths, warmup settings, epoch counts, loss functions, and data-processing scripts.
 
 % The definitions for these levels are as follows: The explanation of the taxonomy label for each level is as follows:
 
@@ -64,25 +66,23 @@ Our work for SemEval-2026 Task 6 tackles both subtasks by predicting labels acro
 \begin{figure}[h!]
     \centering
     \includegraphics[width=0.9\linewidth]{taxonomy.png}
-    \caption{Two-level hierarchical taxonomy for evaluating response clarity.}
+    \caption{Two-level hierarchical taxonomy for evaluating response clarity, adapted from \citet{b4}.}
     \label{fig:taxonomy}
 \end{figure}
-
-% To ensure reproducibility of our results for both Subtask 1 and Subtask 2, our code, model configurations, and data processing scripts are available at \url{https://github.com/tahamunawar/semeval-task6}.
 
 \section{Literature Review}
 
 Research on ambiguity detection in question answering (QA) provides useful foundations for modeling political evasion. \citet{b1} show that large language models often generate coherent yet multi-faceted responses, a pattern similar to evasive political communication. Their self-consistency prompting framework combined with a lightweight Random Forest classifier outperforms larger transformer baselines, particularly in low-resource settings. Similarly, \citet{b2} introduce the AMBIENT benchmark, a linguistically annotated dataset covering lexical, syntactic, and pragmatic ambiguity, including political claims. They demonstrate that even advanced models struggle to resolve ambiguity at human-level performance, while multi-label NLI models perform more effectively, highlighting the need for domain-specific approaches. More broadly, \citet{b3} survey deep learning methods for political text analysis, emphasizing the role of contextual transformers and transfer learning in capturing nuanced political language.
 
-Complementary work from linguistics and political science provides theoretical grounding for evasion taxonomies such as the SemEval-2026 framework. \citet{b5} define ``shifting'' as an evasive strategy in which speakers appear to address a question while subtly refocusing it, corresponding closely to the ``Deflection'' category. Together with \citet{b6}, they identify systematic patterns such as temporal or agent shifts, abstraction changes, and non-answers. \citet{b6} further interpret evasion through Gricean pragmatics, arguing that evasive responses arise from flouting conversational maxims, particularly relevance and informativeness, which aligns with categories such as Dodging, Deflection, General, and Partial replies. Additional linguistic analyses provide fine-grained examples that map to these categories, including ``non-type-conforming answers'' and divergence-minimization strategies \citep{b7}.
+Complementary work from linguistics and political science provides theoretical grounding for evasion taxonomies such as the SemEval-2026 framework. \citet{b5} define ``shifting'' as an evasive strategy in which speakers appear to address a question while subtly refocusing it, corresponding closely to the ``Deflection'' category. They identify systematic patterns such as temporal or agent shifts, abstraction changes, and non-answers. These pragmatic patterns align with categories such as Dodging, Deflection, General, and Partial replies. Additional linguistic analyses provide fine-grained examples that map to these categories, including ``non-type-conforming answers'' and divergence-minimization strategies \citep{b7}.
 
-Unlike traditional transformers limited to 512 tokens, ModernBERT supports sequences up to 8192 tokens. This addresses the risk of omitting critical evasive content due to truncation , enabling full-context modeling of lengthy political responses. \cite{b8}
+Unlike traditional transformers limited to 512 tokens, ModernBERT supports sequences up to 8192 tokens \citep{b8}. This addresses the risk of omitting critical evasive content due to truncation, enabling full-context modeling of lengthy political responses.
 
 Finally, \citet{b9} introduce a self-supervised approach for assessing answer quality in political question-answer sessions by training language models to retrieve correct answers from candidate sets using only question text. Using 58,343 parliamentary exchanges from the Canadian House of Commons, they show that meaningful discourse representations can be learned without additional human annotation, suggesting that large-scale political QA corpora may provide useful domain signals for downstream question-response modeling tasks.
 
 \section{Dataset}
 
-Sourced from the White House (2006–2023), the dataset includes 287 presidential interview transcripts decomposed via ChatGPT-3.5 Turbo into singular QA pairs (sQAs). The final processed data comprises 3,450 training and 308 test rows, both characterized by significant class imbalance in Clarity and Evasion labels
+Sourced from the White House (2006–2023), the dataset includes 287 presidential interview transcripts decomposed via ChatGPT-3.5 Turbo into singular QA pairs (sQAs). The final processed data comprises 3,450 training and 308 test rows, both characterized by significant class imbalance in Clarity and Evasion labels.
 
 Due to high inter-annotator variance, Subtask 2 (Evasion) uses three ground-truth labels per test instance. Per task guidelines, a prediction is correct if it matches any of the three.
 
@@ -140,7 +140,13 @@ Due to high inter-annotator variance, Subtask 2 (Evasion) uses three ground-trut
 We propose six architectural approaches for this task and explore data augmentation strategies to mitigate class imbalance.
 
 \subsection{Task Formulation and Evaluation}
-Given a question $Q$ and an answer $A$, the objective is to predict the high-level clarity label (Subtask 1) and the fine-grained evasion label (Subtask 2). We utilize macro-F1 as the primary evaluation metric. To mitigate class imbalance, we experimented with Focal Loss, Weighted Cross-Entropy, and Dice Loss across all architectural variants.
+Given a question $Q$ and an answer $A$, the objective is to predict the high-level clarity label for Subtask 1 and the fine-grained evasion label for Subtask 2. We use macro-F1 as the primary evaluation metric.
+
+For Subtask 1, each instance has a single gold clarity label. For Subtask 2, each instance has three annotator-provided evasion labels, which are treated as a set of acceptable gold labels $G_i$. A prediction $\hat{y}_i$ is considered correct for class $y$ if $\hat{y}_i = y$ and $y \in G_i$. Following the official scorer for the shared task \citep{b10}, per-class precision, recall, and F1 are computed using this set-valued gold criterion, and the final score is the unweighted mean across evasion classes:
+\[
+F1_{\text{macro}} = \frac{1}{|\mathcal{Y}|}\sum_{y \in \mathcal{Y}} F1_y.
+\]
+To mitigate class imbalance, we experimented with Focal Loss, Weighted Cross-Entropy, and Dice Loss across architectural variants.
 
 \subsection{Direct Classification (ModernBERT)}
 To preserve the full context of sQA pairs, we fine-tune \texttt{ModernBERT-base} and \texttt{large}, leveraging their native 8192-token sequence length to capture the complete interaction within a single classification head \citep{b8}, without having to truncate long political responses.
@@ -157,7 +163,7 @@ We split the long answers into overlapping segments, or instances, such that for
 
 \end{itemize}
 
-We experimented with multiple encoders (BERT, RoBERTa, DeBERTa, ALBERT).
+We experimented with multiple encoders, including BERT \citep{devlin2019bert}, RoBERTa \citep{liu2019roberta}, DeBERTa \citep{he2021deberta}, and ALBERT \citep{lan2020albert}.
 
 \subsection{Natural Language Inference (NLI)}
 For Subtask 1 (Clarity Prediction), we hypothesized that the concept of ``clarity" is fundamentally related to logical entailment. We effectively reframed the classification task into a three-way Natural Language Inference (NLI) problem. For every Question-Answer pair $(Q, A)$, we constructed an NLI input consisting of a Premise and a Hypothesis:
@@ -167,12 +173,12 @@ For Subtask 1 (Clarity Prediction), we hypothesized that the concept of ``clarit
     \item \textbf{Hypothesis ($H$):} ``The speaker explicitly answers the Question: $\{Q\}$."
 \end{itemize}
 
-We used the specialized NLI model \texttt{MoritzLaurer/\allowbreak DeBERTa-v3-large-\allowbreak mnli-fever-anli-ling-wanli}, pre-trained on multiple NLI and factual consistency tasks. While \citet{b4} noted that traditional encoder-only classifiers like BERT are constrained by a 512-token limit, we extended the input length to $\mathbf{2048}$ tokens by leveraging DeBERTa-v3’s relative position embeddings, which generalize to longer sequences given sufficient memory, enabling full-context processing of long political interviews.
+We used the specialized NLI model \texttt{MoritzLaurer/\allowbreak DeBERTa-v3-large-\allowbreak mnli-fever-anli-ling-wanli}, pre-trained on multiple NLI and factual consistency tasks. NLI has been widely used for modeling entailment relationships between premise--hypothesis pairs \citep{bowman2015large}. While \citet{b4} noted that traditional encoder-only classifiers are often constrained by 512-token inputs, we set the maximum sequence length to 2048 tokens for this model. This allowed substantially more of the answer context to be retained, although it remained bounded by available GPU memory. We treat this as an implementation choice rather than an architectural guarantee, since the model was not originally introduced as a long-context encoder.
 
 We map NLI labels to clarity categories as follows: \textbf{Entailment} $\rightarrow$ \textbf{Clear Reply}, \textbf{Contradiction} $\rightarrow$ \textbf{Clear Non-Reply}, and \textbf{Neutral} $\rightarrow$ \textbf{Ambivalent Reply}.
 
 \subsubsection{Adversarial Weight Perturbation (AWP)}
-We applied Adversarial Weight Perturbation (AWP) to improve robustness by encouraging flatter minima. During training, weights $\theta$ are perturbed along the gradient direction:
+We applied AWP \citep{wu2020adversarial} to improve robustness by encouraging flatter minima. During training, weights $\theta$ are perturbed along the gradient direction:
 \begin{equation*}
 \theta_{adv} = \theta + \epsilon \frac{\nabla_\theta \mathcal{L}(\theta)}{\|\nabla_\theta \mathcal{L}(\theta)\|_2}
 \end{equation*}
@@ -183,16 +189,18 @@ with $\epsilon = 10^{-3}$ starting from the second epoch.
 To reconcile biases between different calibration methods, we implemented a Weighted Probability Blend (Soft Voting). We utilized Isotonic Regression ($P_{iso}$) to act as a conservative estimator and Temperature Scaling ($P_{ts}$) to serve as a liberal estimator by softening probability distributions. The final probability distribution $P_{final}$ is the weighted average of the two calibrated distributions:
 $$P_{final} = w_{iso} P_{iso} + (1 - w_{iso}) P_{ts}$$
 
-This NLI formulation was effective for Subtask 1 because its three outputs aligned directly with the clarity labels. We did not extend it to Subtask 2, which includes nine evasion categories, as designing a single coherent premise–hypothesis mapping for such a diverse label set is challenging.
+This NLI formulation was effective for Subtask 1 because its three outputs aligned directly with the clarity labels. We did not extend it to Subtask 2 in the final system because the nine evasion categories do not admit the same direct one-to-one mapping from entailment, contradiction, and neutral. A possible extension would require testing multiple label-specific hypotheses per instance and then designing an aggregation rule over the resulting NLI scores. We considered this design informally, but running it properly was computationally expensive and difficult to validate under our resource constraints.
 
 \subsection{Generative Approach}
-We explored the capabilities of generative LLMs by fine-tuning the \texttt{Llama-3.2-3B} instruct model. Due to computational constraints, we used 4-bit quantization (QLoRA). The inputs consisted of each question--answer pair provided directly to the model, and it was prompted to generate the classification label. For training stability and efficiency, we applied LoRA (Low-Rank Adaptation) with an \textbf{r} value of \textbf{16} and an \textbf{alpha} of \textbf{32}. 
+We explored the capabilities of generative LLMs by fine-tuning the \texttt{Llama-3.2-3B} instruct model \citep{meta2024llama32}. Due to computational constraints, we used 4-bit quantization with QLoRA \citep{dettmers2023qlora}. The inputs consisted of each question--answer pair provided directly to the model, and it was prompted to generate the classification label. For training stability and efficiency, we applied LoRA \citep{hu2021lora} with an \textbf{r} value of \textbf{16} and an \textbf{alpha} of \textbf{32}.
+
+We report this approach only for Subtask 1 in our main results because preliminary Subtask 2 experiments were less reliable than the discriminative MIL setup under the same compute constraints. We therefore did not use the generative model for the final Subtask 2 submission.
 
 \subsection{Multi-Task Hierarchical Gating (MTL)}
 We implemented a Multi-Task Learning (MTL) architecture using ModernBERT-large to jointly optimize Clarity and Evasion labels. The model utilizes a hierarchical gating mechanism where the Clarity Head first computes the probability distribution $P(c|h)$. This distribution is projected into a gating vector $g = \sigma(W_g P(c|h) + b_g)$, which modulates the shared representation via $h_{gated} = h \odot g$ to isolate features relevant to the predicted clarity level. To enforce taxonomic logic, we introduced a Consistency Loss, $\mathcal{L}_{cons} = \sum_{i} \text{softplus}(P(e_i) - P(c_{M(e_i)}))$, which penalizes child label probabilities that exceed those of their parent. The final objective is a weighted sum: $\mathcal{L}_{total} = \alpha \mathcal{L}_{evasion} + \beta \mathcal{L}_{clarity} + \gamma \mathcal{L}_{cons}$.
 
 \subsection{Hierarchy-Aware Global Model (HiAGM)}
-To capture taxonomic dependencies, we implemented a Hierarchy-Aware Global Model (HiAGM) that treats labels as a directed graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$. We utilize a single-layer Graph Convolutional Network (GCN) to learn hierarchy-aware embeddings, $W_{labels} = \text{ReLU}(\tilde{A} \cdot E \cdot W_g)$, allowing feature propagation from parent clarity labels to child evasion techniques. Using ModernBERT-base as a text encoder (1024-token sequence), final logits are computed via dot-product compatibility: $\text{Logits} = h \cdot (W_{labels})^\top$. The model is optimized via Focal Loss ($\gamma=3.0$) with class weights. To ensure 100\% hierarchical consistency, Subtask 1 labels are deterministically inferred post-hoc from the predicted Subtask 2 leaf nodes.
+To capture taxonomic dependencies, we implemented a Hierarchy-Aware Global Model (HiAGM) \citep{zhou2020hierarchy} that treats labels as a directed graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$. We utilize a single-layer Graph Convolutional Network (GCN) to learn hierarchy-aware embeddings, $W_{labels} = \text{ReLU}(\tilde{A} \cdot E \cdot W_g)$, allowing feature propagation from parent clarity labels to child evasion techniques. Using ModernBERT-base as a text encoder (1024-token sequence), final logits are computed via dot-product compatibility: $\text{Logits} = h \cdot (W_{labels})^\top$. The model is optimized via Focal Loss ($\gamma=3.0$) with class weights. To ensure 100\% hierarchical consistency, Subtask 1 labels are deterministically inferred post-hoc from the predicted Subtask 2 leaf nodes.
 
 \subsection{Data Augmentation}
 We experimented with several augmentation strategies to improve robustness:
@@ -212,7 +220,7 @@ These techniques were applied across both subtasks to address class imbalance.
 \section{Results and Discussion}
 
 \subsection{Model Selection and Internal Benchmarking}
-Table \ref{tab:results} compares our best architectural approaches on the \textbf{development test set}, against the baseline benchmarks established by the task organizers \citep{b4}.
+Table \ref{tab:results} compares our best architectural approaches on the \textbf{development set}, against the baseline benchmarks established by the task organizers \citep{b4}.
 
 \begin{table}[h]
 \centering
@@ -225,19 +233,19 @@ Baseline: Llama-2-70B & 0.68 & 0.51 \\
 \hline
 Gen: Llama-3.2-3B & 0.57 & - \\
 Direct: ModernBERT-L & 0.69 & 0.38 \\
-\textbf{MIL: DeBERTa-v3-B} & 0.65 & \textbf{0.46} \\
+\textbf{MIL: DeBERTa-v3-B} & 0.65 & \textbf{0.43} \\
 \textbf{NLI: DeBERTa-v3-L} & \textbf{0.79} & - \\
 MTL: ModernBERT-L & 0.64 & 0.40 \\
 HiAGM: ModernBERT-L & 0.52 & 0.40 \\
 \hline
 \end{tabular}
-\caption{Comparison with the organizers' baseline. T1 = Subtask 1, T2 = Subtask 2.}
+\caption{Comparison with the organizers' development-set baseline. T1 = Subtask 1, T2 = Subtask 2.}
 \label{tab:results}
 \end{table}
 
 
 \subsubsection{Final Evaluation Results}
-After selecting the best-performing models based on development set performance, we evaluated them on the hidden test set. The final macro-F1 scores, which represent our official SemEval-2026 Task 6 submission, are shown in Table 2.
+After selecting the best-performing models based on development-set performance, we evaluated them on the hidden evaluation set. Our official SemEval-2026 Task 6 submission achieved a final leaderboard rank of \textbf{8} for Subtask 1 and \textbf{17} for Subtask 2 in the shared task \citep{b10}. The corresponding macro-F1 scores are shown in Table~\ref{tab:final}.
 
 \begin{table}[h]
 \centering
@@ -246,31 +254,52 @@ After selecting the best-performing models based on development set performance,
 \hline
 \textbf{Task} & \textbf{Model} & \textbf{Dev} & \textbf{Eval} \\
 \hline
-Subtask 1 & (NLI) DeBERTa-v3-L & 0.79 & 0.81 \\
+Subtask 1 & Llama-2-70B baseline & 0.68 & 0.82 \\
+Subtask 1 & NLI: DeBERTa-v3-L & \textbf{0.79} & 0.81 \\
 \hline
-Subtask 2 & DeBERTa-v3-B + MIL & 0.46 & 0.45 \\
+Subtask 2 & Llama-2-70B baseline & 0.51 & 0.57 \\
+Subtask 2 & DeBERTa-v3-B + MIL & 0.43 & 0.45 \\
 \hline
 \end{tabular}
-\caption{Comparison of best model performance on the development set versus the final evaluation (test) set.}
-\label{tab:final}
+\caption{Development and hidden evaluation performance. Baseline scores are shown separately for the development and hidden evaluation splits to avoid cross-split comparison.}\label{tab:final}
 \end{table}
 
-\subsection{Comparison with Benchmark}
-A critical finding of our work is the efficiency-performance trade-off compared to the researchers' baseline. The baseline employed a massive Llama-2-70B model requiring a 4$\times$A100 GPU cluster (160GB VRAM) to achieve an F1 of 0.68 on Subtask 1.
+\subsection{Comparison with Benchmark and Shared-Task Systems}
+A key finding of our work is the efficiency--performance trade-off relative to the organizers' Llama-2-70B baseline. While the baseline uses a 70B-parameter generative model, our best Subtask 1 model uses DeBERTa-v3-large, with roughly 400M parameters. On the development set, our NLI formulation improves Subtask 1 macro-F1 from 0.68 to 0.79; on the hidden evaluation set, it remains competitive with the baseline (0.81 vs. 0.82), though not superior.
 
-In contrast, our NLI-based approach using DeBERTa-v3-large (approx. 400M parameters) achieved a final evaluation F1 score of \textbf{0.81}. This demonstrates that for the specific task of clarity detection, framing the problem as logical entailment is significantly more effective and computationally efficient than fine-tuning massive generative models. 
-
-However, for Subtask 2 (Evasion Techniques), the researchers' baseline (0.51) outperformed our best MIL approach \textbf{0.45}. We attribute this to the semantic granularity required for evasion classification. Subtask 2 labels (e.g., "Deflection" vs. "Dodging") often hinge on subtle pragmatic flouting rather than clear lexical shifts.
-
-Our MIL framework uses attention pooling to isolate discriminative segments, but this "segment-first" approach may lose the broader rhetorical arc that a 70B-parameter model captures through its deeper attention layers. The 70B model's scale allows it to model complex cross-attentions between the question's intent and the response's global structure, a level of linguistic nuance that smaller discriminative models appear to lack.
+The broader shared-task results further contextualize this trade-off. The strongest Subtask 1 systems relied mainly on LLM prompting, multi-stage reasoning, and hierarchical mappings, with the top system reaching 0.89 macro-F1 \citep{b10}. Our result suggests that a smaller NLI-based encoder can remain competitive when clarity prediction is framed as entailment. For Subtask 2, however, the baseline and top shared-task systems remain substantially stronger, indicating that fine-grained evasion detection benefits from taxonomy-aware routing, constrained label spaces, and LLM-based verification beyond segment-level MIL.
 
 \subsection{Performance Analysis}
 
 \subsubsection{Context vs. Segmentation in Evasion}
-For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.46 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the ``evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
+For Subtask 2, the Multiple Instance Learning (MIL) approach outperformed ModernBERT (0.43 vs. 0.38). While ModernBERT captures the entire context (8192 tokens), the ``evasion" label is often localized. The global pooling of ModernBERT may dilute these specific signals. In contrast, the Attention Pooling mechanism in MIL explicitly assigns high weights to the most discriminative segments of the answer, effectively isolating the evasion tactic.
+
+\begin{table}[h]
+\centering
+\scriptsize
+\begin{tabular}{lcccc}
+\hline
+\textbf{Class} & \textbf{Support} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} \\
+\hline
+Claims ignorance & 14 & 0.83 & 0.71 & 0.77 \\
+Clarification & 4 & 0.67 & 0.50 & 0.57 \\
+Declining to answer & 13 & 0.29 & 0.54 & 0.38 \\
+Deflection & 29 & 0.31 & 0.17 & 0.22 \\
+Dodging & 72 & 0.54 & 0.29 & 0.38 \\
+Explicit & 88 & 0.77 & 0.23 & 0.35 \\
+General & 92 & 0.56 & 0.38 & 0.45 \\
+Implicit & 82 & 0.41 & 0.57 & 0.48 \\
+Partial/half-answer & 12 & 0.27 & 0.25 & 0.26 \\
+\hline
+\end{tabular}
+\caption{Per-class development-set performance of the MIL model for Subtask 2. Support is computed as TP+FN under the official set-valued gold-label criterion.}
+\label{tab:subtask2_per_class}
+\end{table}
+
+The MIL model performs best on relatively explicit refusal-like categories such as \textit{Claims ignorance} and \textit{Clarification}, while performance is weakest for more pragmatically subtle categories such as \textit{Deflection}, \textit{Dodging}, and \textit{Partial/half-answer}. This broadly aligns with the evasion-level annotation difficulty reported by \citet{b4}, where annotators showed high disagreement among closely related categories such as \textit{General}, \textit{Implicit}, \textit{Deflection}, and \textit{Dodging}. In particular, \citet{b4} report low pairwise agreement for \textit{General} vs. \textit{Implicit} ($\kappa=0.43$), \textit{General} vs. \textit{Deflection} ($\kappa=0.56$), \textit{General} vs. \textit{Dodging} ($\kappa=0.57$), and \textit{Dodging} vs. \textit{Deflection} ($\kappa=0.62$). Since we do not compute a model-level confusion matrix, we interpret this only as supporting evidence that several low-F1 categories correspond to inherently difficult evasion distinctions.
 
 \subsubsection{The Trade-off of Hierarchical Constraints}
-While the Multi-Task Hierarchical Gating (MTL) and Hierarchy-Aware Global Model (HiAGM) were designed to explicitly model the taxonomic dependencies described in Section 4.6 and 4.7 , they achieved lower macro-F1 scores (0.64 and 0.52 respectively) on Subtask 1 compared to the NLI approach. We observe that the Hierarchical Consistency Loss ($\mathcal{L}_{cons}$) and the post-hoc deterministic inference used in HiAGM  may have been overly restrictive. By forcing the model to strictly adhere to the parent-child relationship, we likely introduced a "bottleneck" where errors in fine-grained evasion detection (Subtask 2) propagated upward, penalizing the clarity prediction (Subtask 1). In contrast, the NLI model's flexibility to treat clarity as a logical entailment problem allowed for better generalization across varied presidential rhetorical styles.
+While the Multi-Task Hierarchical Gating (MTL) and Hierarchy-Aware Global Model (HiAGM) were designed to explicitly model the taxonomic dependencies described in Sections 4.6 and 4.7, they achieved lower macro-F1 scores (0.64 and 0.52 respectively) on Subtask 1 compared to the NLI approach. We observe that the Hierarchical Consistency Loss ($\mathcal{L}_{cons}$) and the post-hoc deterministic inference used in HiAGM may have been overly restrictive. By forcing the model to strictly adhere to the parent-child relationship, we likely introduced a "bottleneck" where errors in fine-grained evasion detection (Subtask 2) propagated upward, penalizing the clarity prediction (Subtask 1). In contrast, the NLI model's flexibility to treat clarity as a logical entailment problem allowed for better generalization across varied presidential rhetorical styles.
 
 \subsubsection{The Generative Lag}
 Our generative approach (\texttt{Llama-3.2-3B}) underperformed, achieving only 0.57 F1. We observed early overfitting, with performance dropping from 0.57 to 0.50 between epochs. This reinforces our finding that without the massive scale of the researchers' $70\text{B}$ model, generative decoding is less stable than discriminative classification for this task.
@@ -296,7 +325,7 @@ Subtask 1 & \textit{None (Best Model)} & \textbf{0.79} \\
 & Back-Translation & 0.74 \\
 & Few-Shot Synthetic Generation & 0.70 \\
 \hline
-Subtask 2 & \textit{None (Best Model)} & \textbf{0.46} \\
+Subtask 2 & \textit{None (Best Model)} & \textbf{0.43} \\
 & Random Word Deletion & 0.41 \\
 & Weighted Oversampling & 0.42 \\
 & Contextual Word Replacement & 0.39 \\
@@ -309,11 +338,12 @@ Subtask 2 & \textit{None (Best Model)} & \textbf{0.46} \\
 \end{table}
 
 \subsubsection{NLI Calibration and Error Analysis}
-Initial experiments revealed significant semantic overlap between the \textit{Clear Reply} and \textit{Ambivalent} classes, leading to a performance bottleneck. This aligns with \citet{b4}, who reported that annotators struggled most to distinguish between the parent categories \textit{Clear Reply} and \textit{Ambivalent} in the clarity dimension, with inter-annotator agreement dropping to $\kappa = 0.65$, compared to much higher agreement for other high-level distinctions. The introduction of Adversarial Weight Perturbation (AWP) proved vital, seeking a flatter loss landscape that improved the macro-F1 from 0.70 to 0.74 by enhancing model robustness against varied political phrasing. Building on this, our hybrid post-training probability calibration further decoupled the remaining semantic overlap, resulting in our final state-of-the-art macro-F1 score of 0.79. Our analysis showed that the distinct calibration methods yielded specific performance biases: Isotonic Regression ($P_{iso}$) provided high precision (0.84) for clear replies, while Temperature Scaling ($P_{ts}$) recovered recall (0.78). Through a grid search on the validation set, we determined the optimal temperature to be $T = 1.23$ and the optimal weighting factor to be $w_{iso} = 0.59$. 
-
+Initial experiments revealed significant semantic overlap between the \textit{Clear Reply} and \textit{Ambivalent} classes, leading to a performance bottleneck. This aligns with \citet{b4}, who reported that annotators struggled most to distinguish between the parent categories \textit{Clear Reply} and \textit{Ambivalent} in the clarity dimension, with inter-annotator agreement dropping to $\kappa = 0.65$, compared to much higher agreement for other high-level distinctions. The introduction of AWP proved vital, seeking a flatter loss landscape that improved the macro-F1 from 0.70 to 0.74 by enhancing model robustness against varied political phrasing. Building on this, our hybrid post-training probability calibration further decoupled the remaining semantic overlap, resulting in our final development-set macro-F1 score of 0.79. Our analysis showed that the distinct calibration methods yielded specific performance biases: Isotonic Regression ($P_{iso}$) provided high precision (0.84) for clear replies, while Temperature Scaling ($P_{ts}$) recovered recall (0.78). Through a grid search on the validation set, we determined the optimal temperature to be $T = 1.23$ and the optimal weighting factor to be $w_{iso} = 0.59$. 
 
 \section{Limitations}
 A primary challenge in our experimentation was the significant computational disparity between our infrastructure and the task's 70B-parameter baseline. Our generative fine-tuning was restricted by Kaggle and Google Colab runtime limits, where the 8-hour-per-epoch training cycle frequently triggered platform timeouts and session disconnections. These compute constraints prevented us from performing exhaustive hyperparameter tuning or completing longer training runs, which likely contributed to the ``generative lag'' observed in our results.
+
+A further limitation is that most results are based on single development-set runs rather than multi-seed averages. This is especially relevant for Subtask 2, where several evasion categories have low support and may therefore be sensitive to random initialization and sampling effects. In addition, although the final NLI system used a validation-selected calibration blend with $w_{iso}=0.59$, we did not perform an extensive sensitivity analysis of this weight. Future work should evaluate whether the calibration gains remain stable across seeds and whether they improve all clarity classes uniformly or mainly benefit the difficult \textit{Clear Reply}--\textit{Ambivalent Reply} boundary.
 
 % In future work, we plan to use Synthetic Data Generation as an augmentation strategy. We will prompt a large instruction-tuned model (e.g., Gemini 2.5 Flash API or GPT-5-mini) using a few-shot setup. For each of the 3 Clarity Level classes and 9 Evasion Level classes, we will provide the model with \textbf{5} manually selected question--answer examples representing that class. The model will then be instructed to generate new question--answer pairs that strictly follow the target label, allowing us to create high-quality synthetic samples to expand our training dataset.
 

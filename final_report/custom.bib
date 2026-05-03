@@ -16,7 +16,6 @@
   url       = {https://aclanthology.org/2024.findings-emnlp.300/},
   doi       = {10.18653/v1/2024.findings-emnlp.300},
   pages     = {5204--5233},
-  abstract  = {Equivocation and ambiguity in public speech are well-studied discourse phenomena, especially in political science and analysis of political interviews. Inspired by the well-grounded theory on equivocation, we aim to resolve the closely related problem of response clarity in questions extracted from political interviews, leveraging the capabilities of Large Language Models (LLMs) and human expertise. To this end, we introduce a novel taxonomy that frames the task of detecting and classifying response clarity and a corresponding clarity classification dataset which consists of question-answer (QA) pairs drawn from political interviews and annotated accordingly. Our proposed two-level taxonomy addresses the clarity of a response in terms of the information provided for a given question (high-level) and also provides a fine-grained taxonomy of evasion techniques that relate to unclear, ambiguous responses (lower-level). We combine ChatGPT and human annotators to collect, validate and annotate discrete QA pairs from political interviews, to be used for our newly introduced response clarity task. We provide a detailed analysis and conduct several experiments with different model architectures, sizes and adaptation methods to gain insights and establish new baselines over the proposed dataset and task.}
 }
 
 @inproceedings{b1,
@@ -50,7 +49,6 @@
   doi       = {10.18653/v1/2025.trustnlp-main.4},
   pages     = {41--55},
   isbn      = {979-8-89176-233-6},
-  abstract  = {Large Language Models (LLMs) have demonstrated excellent capabilities in Question Answering (QA) tasks, yet their ability to identify and address ambiguous questions remains underdeveloped. Ambiguities in user queries often lead to inaccurate or misleading answers, undermining user trust in these systems. Despite prior attempts using prompt-based methods, performance has largely been equivalent to random guessing, leaving a significant gap in effective ambiguity detection. To address this, we propose a novel framework for detecting ambiguous questions within LLM-based QA systems. We first prompt an LLM to generate multiple answers to a question, and then analyze them to infer the ambiguity. We propose to use a lightweight Random Forest model, trained on a bootstrapped and shuffled 6-shot examples dataset. Experimental results on ASQA, PACIFIC, and ABG-COQA datasets demonstrate the effectiveness of our approach, with accuracy up to 70.8{\%}. Furthermore, our framework enhances the confidence calibration of LLM outputs, leading to more trustworthy QA systems able to handle complex questions.}
 }
 
 @inproceedings{b2,
@@ -75,7 +73,6 @@
   url       = {https://aclanthology.org/2023.emnlp-main.51/},
   doi       = {10.18653/v1/2023.emnlp-main.51},
   pages     = {790--807},
-  abstract  = {Ambiguity is an intrinsic feature of natural language. Managing ambiguity is a key part of human language understanding, allowing us to anticipate misunderstanding as communicators and revise our interpretations as listeners. As language models are increasingly employed as dialogue interfaces and writing aids, handling ambiguous language is critical to their success. We capture ambiguity in a sentence through its effect on entailment relations with another sentence, and collect AmbiEnt, a linguist-annotated benchmark of 1,645 examples with diverse kinds of ambiguity. We design a suite of tests based on AmbiEnt, presenting the first evaluation of pretrained LMs to recognize ambiguity and disentangle possible meanings. We find that the task remains extremely challenging, including for GPT-4, whose generated disambiguations are considered correct only 32{\%} of the time in crowdworker evaluation, compared to 90{\%} for disambiguations in our dataset. Finally, to illustrate the value of ambiguity-sensitive tools, we show that a multilabel NLI model can flag political claims in the wild that are misleading due to ambiguity. We encourage the field to rediscover the importance of ambiguity for NLP.}
 }
 
 @incollection{b3,
@@ -89,42 +86,27 @@
 }
 
 @article{b5,
-  author   = {Jonas Gabrielsen and Heidi Jønch-Clausen and Christina Pontoppidan},
-  title    = {Answering without answering: Shifting as an evasive rhetorical strategy},
-  journal  = {Journalism},
-  volume   = {21},
-  number   = {9},
-  pages    = {1355-1370},
-  year     = {2020},
-  doi      = {10.1177/1464884917738412},
-  url      = {https://doi.org/10.1177/1464884917738412},
-  eprint   = {https://doi.org/10.1177/1464884917738412},
-  abstract = { In the context of political press conferences, the authors explore a particular category of subtle evasions they term shifting. When shifting, the interviewee seemingly accepts to answer the journalist’s question. However, in providing the answer, the interviewee refocuses the question replacing its critical aspect with a more favorable one. Guided by classical rhetoric, the authors unfold the underlying logic of a shift. Analyzing 14 press conferences held by the Danish Prime Minister, Lars Løkke Rasmussen, they identify three subcategories of shifting: shift in time, shift of agent, and shift of level. Ideally, knowledge of the different shifting strategies can enable journalists to detect a shift and promptly react when interviewees shift the focus of a question. }
+  author  = {Gabrielsen, Jonas and J{\o}nch-Clausen, Heidi and Pontoppidan, Christina},
+  title   = {Answering without answering: Shifting as an evasive rhetorical strategy},
+  journal = {Journalism},
+  volume  = {21},
+  number  = {9},
+  pages   = {1355--1370},
+  year    = {2020},
+  doi     = {10.1177/1464884917738412},
+  url     = {https://doi.org/10.1177/1464884917738412}
 }
 
-@article{b6,
-  author       = {Mahdi, Souad Hafed and Al-Azzawi, Qasim Obayes },
-  title        = {The Pragmatics of Dialogue Evasion in American Political Debates},
-  volume       = {4},
-  url          = {https://journal.hmjournals.com/index.php/JPPS/article/view/4086},
-  doi          = {10.55529/jpps.43.1.13},
-  abstractnote = {&amp;lt;p&amp;gt;&amp;lt;strong&amp;gt;&amp;lt;em&amp;gt;In political discourse, dialogue evasion is a strategy by which people avoid directly answering questions or talking about certain topics during talks. The present study investigates the utilization of pragmatic strategies employed by politicians during American political debates as a means of avoiding direct confrontation. It is hypothesized that politicians employ implicature and presupposition in order to navigate talks, which may include redirection, non- answers, and questioning. Politicians also flout Grice’s maxims in order to avoid providing direct responses, allowing them to manipulate the established conventions and expectations of conversations. &amp;lt;/em&amp;gt;&amp;lt;/strong&amp;gt;&amp;lt;/p&amp;gt;},
-  number       = {03},
-  journal      = {Journal of Psychology and Political Science },
-  author       = {Souad Hafed Mahdi and Prof. Qasim Obayes Al-Azzawi},
-  year         = {2024},
-  month        = {Apr.},
-  pages        = {1-13}
-}
-
-@inbook{b7,
-  author = {Vázquez Carranza, Ariel},
-  year   = {2018},
-  month  = {05},
-  pages  = {65- 89},
-  title  = {Evading and Resisting Answering: an analysis of Mexican Spanish news interviews},
-  isbn   = {9789027263674},
-  doi    = {10.1075/bct.96.03car}
+@incollection{b7,
+  author    = {V{\'a}zquez Carranza, Ariel},
+  title     = {Evading and Resisting Answering: An Analysis of Mexican Spanish News Interviews},
+  editor    = {Mosegaard Hansen, Maj-Britt and M{\'a}rquez Reiter, Rosina},
+  booktitle = {The Pragmatics of Sensitive Activities in Institutional Discourse},
+  publisher = {John Benjamins Publishing Company},
+  year      = {2018},
+  pages     = {65--89},
+  doi       = {10.1075/bct.96.03car},
+  url       = {https://doi.org/10.1075/bct.96.03car}
 }
 
 @inproceedings{b8,
@@ -155,7 +137,6 @@
   doi       = {10.18653/v1/2025.acl-long.127},
   pages     = {2526--2547},
   isbn      = {979-8-89176-251-0},
-  abstract  = {Encoder-only transformer models such as BERT offer a great performance-size tradeoff for retrieval and classification tasks with respect to larger decoder-only models. Despite being the workhorse of numerous production pipelines, there have been limited Pareto improvements to BERT since its release. In this paper, we introduce ModernBERT, bringing modern model optimizations to encoder-only models and representing a major Pareto improvement over older encoders. Trained on 2 trillion tokens with a native 8192 sequence length, ModernBERT models exhibit state-of-the-art results on a large pool of evaluations encompassing diverse classification tasks and both single and multi-vector retrieval on different domains (including code). In addition to strong downstream performance, ModernBERT is also the most speed and memory efficient encoder and is designed for inference on common GPUs.}
 }
 
 @article{b9,
@@ -167,4 +148,107 @@
   author  = {Alvarez, R. Michael and Morrier, Jacob},
   year    = {2026},
   pages   = {78-95}
+}
+
+@misc{b10,
+  title         = {{SemEval-2026 Task 6}: {CLARITY} -- Unmasking Political Question Evasions},
+  author        = {Thomas, Konstantinos and Filandrianos, Giorgos and Lymperaiou, Maria and Zerva, Chrysoula and Stamou, Giorgos},
+  year          = {2026},
+  eprint        = {2603.14027},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2603.14027}
+}
+
+@inproceedings{bowman2015large,
+  title     = {A large annotated corpus for learning natural language inference},
+  author    = {Bowman, Samuel R. and Angeli, Gabor and Potts, Christopher and Manning, Christopher D.},
+  booktitle = {Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing},
+  month     = sep,
+  year      = {2015},
+  address   = {Lisbon, Portugal},
+  publisher = {Association for Computational Linguistics},
+  url       = {https://aclanthology.org/D15-1075/},
+  doi       = {10.18653/v1/D15-1075},
+  pages     = {632--642}
+}
+
+@inproceedings{devlin2019bert,
+  title     = {{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding},
+  author    = {Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  booktitle = {Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies},
+  year      = {2019},
+  address   = {Minneapolis, Minnesota},
+  publisher = {Association for Computational Linguistics},
+  url       = {https://aclanthology.org/N19-1423/},
+  doi       = {10.18653/v1/N19-1423},
+  pages     = {4171--4186}
+}
+
+@misc{liu2019roberta,
+  title        = {{RoBERTa}: A Robustly Optimized {BERT} Pretraining Approach},
+  author       = {Liu, Yinhan and Ott, Myle and Goyal, Naman and Du, Jingfei and Joshi, Mandar and Chen, Danqi and Levy, Omer and Lewis, Mike and Zettlemoyer, Luke and Stoyanov, Veselin},
+  year         = {2019},
+  howpublished = {{ICLR} 2020 OpenReview submission},
+  url          = {https://openreview.net/forum?id=SyxS0T4tvS}
+}
+
+@inproceedings{he2021deberta,
+  title     = {{DeBERTa}: Decoding-enhanced {BERT} with Disentangled Attention},
+  author    = {He, Pengcheng and Liu, Xiaodong and Gao, Jianfeng and Chen, Weizhu},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2021},
+  url       = {https://openreview.net/forum?id=XPZIaotutsD}
+}
+
+@inproceedings{lan2020albert,
+  title     = {{ALBERT}: A Lite {BERT} for Self-supervised Learning of Language Representations},
+  author    = {Lan, Zhenzhong and Chen, Mingda and Goodman, Sebastian and Gimpel, Kevin and Sharma, Piyush and Soricut, Radu},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2020},
+  url       = {https://openreview.net/forum?id=H1eA7AEtvS}
+}
+
+@inproceedings{hu2021lora,
+  title     = {{LoRA}: Low-Rank Adaptation of Large Language Models},
+  author    = {Hu, Edward J. and Shen, Yelong and Wallis, Phillip and Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and Wang, Lu and Chen, Weizhu},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2022},
+  url       = {https://openreview.net/forum?id=nZeVKeeFYf9}
+}
+
+@inproceedings{dettmers2023qlora,
+  title     = {{QLoRA}: Efficient Finetuning of Quantized {LLMs}},
+  author    = {Dettmers, Tim and Pagnoni, Artidoro and Holtzman, Ari and Zettlemoyer, Luke},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {36},
+  year      = {2023},
+  url       = {https://proceedings.neurips.cc/paper_files/paper/2023/hash/1feb87871436031bdc0f2beaa62a049b-Abstract-Conference.html}
+}
+
+@misc{meta2024llama32,
+  title        = {{Llama 3.2 3B Instruct Model Card}},
+  author       = {{Meta AI}},
+  year         = {2024},
+  howpublished = {\url{https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/}}
+}
+
+@inproceedings{wu2020adversarial,
+  title     = {Adversarial Weight Perturbation Helps Robust Generalization},
+  author    = {Wu, Dongxian and Xia, Shu-Tao and Wang, Yisen},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2020},
+  url       = {https://proceedings.neurips.cc/paper/2020/hash/1ef91c212e30e14bf125e9374262401f-Abstract.html}
+}
+
+@inproceedings{zhou2020hierarchy,
+  title     = {Hierarchy-Aware Global Model for Hierarchical Text Classification},
+  author    = {Zhou, Jie and Ma, Chunping and Long, Dingkun and Xu, Guangwei and Ding, Ning and Zhang, Haoyu and Xie, Pengjun and Liu, Gongshen},
+  booktitle = {Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics},
+  year      = {2020},
+  address   = {Online},
+  publisher = {Association for Computational Linguistics},
+  url       = {https://aclanthology.org/2020.acl-main.104/},
+  doi       = {10.18653/v1/2020.acl-main.104},
+  pages     = {1106--1117}
 }
