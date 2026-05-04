@@ -26,3 +26,5 @@ Thumbs.db
 # Ensuring these specific style/bib files are never ignored
 !acl.sty
 !acl_natbib.bst
+
+report iterations plus misc
